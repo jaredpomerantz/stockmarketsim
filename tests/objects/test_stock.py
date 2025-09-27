@@ -1,12 +1,13 @@
 """Tests for the Stock module."""
 
-import pytest
-from simulator.objects.stock import Stock
 import numpy as np
+import pytest
+
+from simulator.objects.stock import Stock
 
 
 @pytest.fixture()
-def basic_stock() -> Stock:
+def basic_stock() -> Stock:  # noqa: D103
     return Stock(
         cash=500.0,
         earning_value_of_assets=500.0,
@@ -16,7 +17,7 @@ def basic_stock() -> Stock:
     )
 
 
-def test_stock_get_price_changes_over_time_with_valid_price_history_returns_expected_result(
+def test_stock_get_price_changes_over_time_with_valid_price_history_returns_expected_result(  # noqa: D103
     basic_stock,
 ) -> None:
     # Act.
@@ -41,7 +42,7 @@ def test_stock_get_price_changes_over_time_with_valid_price_history_returns_expe
         )
     )
 
-def test_stock_update_price_history_with_valid_price_returns_expected_result(basic_stock) -> None:
+def test_stock_update_price_history_with_valid_price_returns_expected_result(basic_stock) -> None:  # noqa: D103
     # Act.
     result = basic_stock.update_price_history(1825.0)
 
