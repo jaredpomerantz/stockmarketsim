@@ -7,17 +7,18 @@ from simulator.objects.stock import Stock
 
 
 @pytest.fixture()
-def basic_stock() -> Stock:  # noqa: D103
+def basic_stock() -> Stock:
     return Stock(
         cash=500.0,
         earning_value_of_assets=500.0,
         latest_quarterly_earnings=500.0,
         price_history=np.arange(1825),
         quality_of_leadership=0.5,
+        stock_volatility=0.01,
     )
 
 
-def test_stock_get_price_changes_over_time_with_valid_price_history_returns_expected_result(  # noqa: D103
+def test_stock_get_price_changes_over_time_with_valid_price_history_returns_expected_result(
     basic_stock,
 ) -> None:
     # Act.
@@ -42,7 +43,10 @@ def test_stock_get_price_changes_over_time_with_valid_price_history_returns_expe
         )
     )
 
-def test_stock_update_price_history_with_valid_price_returns_expected_result(basic_stock) -> None:  # noqa: D103
+
+def test_stock_update_price_history_with_valid_price_returns_expected_result(
+    basic_stock,
+) -> None:
     # Act.
     result = basic_stock.update_price_history(1825.0)
 
