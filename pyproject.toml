@@ -37,6 +37,7 @@ select = [
 ignore = [
     "E501", # Line too long (handled by formatter)
     "D100", # Missing docstring in public module
+    "D103",
     "D104", # Missing docstring in public package
     "D105", # Missing docstring in magic method
 ]
@@ -58,6 +59,4 @@ quote-style = "double"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-
-[tool.coverage.report]
-show_missing = true
+addopts = "--cov=src/simulator --cov-report=term-missing --cov-branch"

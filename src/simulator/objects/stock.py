@@ -1,7 +1,8 @@
 """Definition for the Stock class."""
 
-import numpy as np
+import uuid
 
+import numpy as np
 
 ZERO_REPLACE_VALUE = 0.01
 
@@ -16,6 +17,7 @@ class Stock:
         latest_quarterly_earnings: float,
         price_history: np.ndarray,
         quality_of_leadership: float,
+        stock_volatility: float,
     ) -> None:
         """Initialize the Stock class.
 
@@ -29,15 +31,23 @@ class Stock:
             quality_of_leadership: Determines the company's decision-making ability.
                 This influences the company's ability to turn cash investments into
                 earning_value_of_assets.
+            stock_volatility: Determines the day-to-day volatility of the stock.
+                This volatility represents a single standard deviation in a normal
+                distribution for a day's percent change due to randomness for the stock.
 
         """
+        self.id = uuid.uuid4()
         self.cash = cash
         self.earning_value_of_assets = earning_value_of_assets
         self.latest_quarterly_earnings = latest_quarterly_earnings
         self.price_history = price_history
         self.quality_of_leadership = quality_of_leadership
+        self.stock_volatility = stock_volatility
 
         self.price = self.price_history[-1]
+
+    def __repr__(self) -> str:
+        return f"Stock {self.id}; Price {self.price}; Cash {self.cash}"
 
     def get_price_changes_over_time(self) -> np.ndarray:
         """Get the price changes over time.
@@ -64,3 +74,11 @@ class Stock:
 
         """
         return np.append(self.price_history[1:], price)
+
+    def compound_cash(self, interest_rate_apy: float) -> None:
+        """Compounds the current cash holding.
+
+        This initial implementation assumes that the stock can go into debt freely.
+        Cash is compounded the same whether it's negative or positive.
+        """
+        self.cash *= (interest_rate_apy + 1) ** (1 / 365)
