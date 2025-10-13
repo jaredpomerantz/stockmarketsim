@@ -82,3 +82,20 @@ class Stock:
         Cash is compounded the same whether it's negative or positive.
         """
         self.cash *= (interest_rate_apy + 1) ** (1 / 365)
+
+class StockHolding:
+    """The class definition of a holding of a Stock."""
+
+    def __init__(self, stock: Stock, stock_quantity: int) -> None:
+        """Instantiate the StockHolding class."""
+        self.stock = stock
+        self.stock_quantity = stock_quantity
+
+    def get_holding_value(self) -> float:
+        """Calculate the value of the StockHolding.
+
+        Returns:
+            The value of the holding.
+
+        """
+        return self.stock.price * self.stock_quantity
