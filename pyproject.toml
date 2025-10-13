@@ -59,6 +59,4 @@ quote-style = "double"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-
-[tool.coverage.report]
-show_missing = true
+addopts = "--cov=src/simulator --cov-report=term-missing --cov-branch"
