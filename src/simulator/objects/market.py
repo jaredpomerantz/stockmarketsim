@@ -1,6 +1,7 @@
 """Definition for the Market class."""
 
 import numpy as np
+import pandas as pd
 
 from simulator.objects.stock import Stock
 

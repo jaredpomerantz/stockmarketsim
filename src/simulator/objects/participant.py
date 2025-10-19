@@ -20,4 +20,9 @@ class Participant:
 
     def get_stock_portfolio_value(self) -> float:
         """Get the total value of the Participant's stock portfolio."""
-        return sum([stock_holding.get_holding_value() for stock_holding in self.stock_portfolio])
+        return sum(
+            [
+                stock_holding.get_holding_value()
+                for stock_holding in self.stock_portfolio
+            ]
+        )

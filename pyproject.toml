@@ -23,7 +23,7 @@ mypy = "*"
 line-length = 80
 target-version = "py312" # Target Python version for syntax and features
 
-select = [
+lint.select = [
     "E",  # pycodestyle errors
     "F",  # Pyflakes
     "W",  # pycodestyle warnings
@@ -34,12 +34,15 @@ select = [
     "UP", # pyupgrade
 ]
 
-ignore = [
-    "E501", # Line too long (handled by formatter)
+lint.ignore = [
     "D100", # Missing docstring in public module
     "D103",
     "D104", # Missing docstring in public package
     "D105", # Missing docstring in magic method
+    "D203",
+    "D211",
+    "D213",
+    "D214"
 ]
 
 exclude = [

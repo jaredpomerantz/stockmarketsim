@@ -83,6 +83,7 @@ class Stock:
         """
         self.cash *= (interest_rate_apy + 1) ** (1 / 365)
 
+
 class StockHolding:
     """The class definition of a holding of a Stock."""
 
