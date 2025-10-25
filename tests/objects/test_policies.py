@@ -3,16 +3,15 @@
 import pytest
 import torch
 
-from simulator.objects.policies.nn_policy import NNPolicy
 from simulator.objects.market import Market
-from simulator.objects.stock import Stock, StockHolding, Portfolio
-from .test_market import basic_market
+from simulator.objects.policies.nn_policy import NNPolicy
+from simulator.objects.stock import Portfolio, StockHolding
 
 
 @pytest.fixture()
 def example_policy(basic_market: Market) -> NNPolicy:
     example_portfolio = Portfolio([StockHolding(basic_market.stocks[0], 1)])
-    return NNPolicy(basic_market, example_portfolio, 5)
+    return NNPolicy(basic_market, example_portfolio, 5, 10)
 
 
 def test_nn_policy_generate_input_tensor_given_valid_input_returns_expected_result(
@@ -57,7 +56,7 @@ def test_nn_policy_generate_input_tensor_given_valid_input_returns_expected_resu
     ).to(torch.float64)
 
     # Act.
-    output = example_policy.generate_input_tensor(
+    _, output = example_policy.generate_input_tensor(
         example_policy.market,
         example_policy.portfolio,
         example_policy.n_stocks_to_sample,

@@ -35,11 +35,21 @@ class BasePolicy:
         raise NotImplementedError()
 
     @abstractmethod
-    def infer_buy_actions(self, current_market) -> None:
-        """Create buy orders based on the current market.
+    def infer_buy_actions(self, current_market) -> list[BuyOrder]:
+        """Infer buy actions based on the current market.
 
         Args:
             current_market: The current market of stocks.
+
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def infer_sell_actions(self, portfolio) -> list[SellOrder]:
+        """Infer sell actions based on the current portfolio.
+
+        Args:
+            portfolio: The participant's stock portfolio.
 
         """
         raise NotImplementedError()

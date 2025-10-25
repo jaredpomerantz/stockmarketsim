@@ -124,15 +124,56 @@ class Portfolio:
 
     def __init__(self, stock_holdings: list[StockHolding]) -> None:
         """Instantiate the Portfolio class."""
-        self.stock_holdings = stock_holdings
-        self.stock_holding_dict = self.get_stock_holding_dictionary()
+        self.stock_holding_dict = self.get_stock_holding_dictionary(stock_holdings)
 
-    def get_stock_holding_dictionary(self) -> dict[str, StockHolding]:
+    def get_stock_holding_dictionary(
+        self, stock_holdings: list[StockHolding]
+    ) -> dict[str, StockHolding]:
         """Gets the stock holding dictionary.
 
-        This function allows StockHoldings to be accessed by stock ID.
+        This dictionary allows StockHoldings to be accessed by stock ID.
+
+        Args:
+            stock_holdings: The stock holdings to create a dictionary from.
+
+        Returns:
+            A dictionary mapping stock ids to stock holdings.
+
         """
-        return {
-            stock_holding.stock.id: stock_holding
-            for stock_holding in self.stock_holdings
-        }
+        self.stock_holding_dict = {}
+        for stock_holding in stock_holdings:
+            self.stock_holding_dict = self.add_stock_holding(stock_holding)
+        return self.stock_holding_dict
+
+    def add_stock_holding(self, stock_holding: StockHolding) -> dict[str, StockHolding]:
+        """Adds a stock holding to the portfolio.
+
+        Args:
+            stock_holding: The stock_holding to add to the portfolio.
+
+        Returns:
+            An updated stock holding dictionary.
+
+        """
+        if stock_holding.stock.id in self.stock_holding_dict:
+            self.stock_holding_dict[
+                stock_holding.stock.id
+            ].stock_quantity += stock_holding.stock_quantity
+        else:
+            self.stock_holding_dict[stock_holding.stock.id] = stock_holding
+
+        return self.stock_holding_dict
+
+    def get_stock_holding_list_from_dictionary(
+        self, stock_holding_dict: dict[str, StockHolding]
+    ) -> list[StockHolding]:
+        """Gets a stock holding list from a stock holding dictionary.
+
+        Args:
+            stock_holding_dict: The stock holding dictionary.
+
+        Returns:
+            A list of stock holdings.
+
+        """
+        return list(stock_holding_dict.values())
