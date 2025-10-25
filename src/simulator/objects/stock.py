@@ -36,7 +36,7 @@ class Stock:
                 distribution for a day's percent change due to randomness for the stock.
 
         """
-        self.id = uuid.uuid4()
+        self.id = str(uuid.uuid4())
         self.cash = cash
         self.earning_value_of_assets = earning_value_of_assets
         self.latest_quarterly_earnings = latest_quarterly_earnings
@@ -56,12 +56,29 @@ class Stock:
         3-month, 6-month, 1-year, 3-year, and 5-year periods from the current
         day.
         """
-        indices_to_keep = [-2, -11, -31, -91, -181, -366, -1096, 0]
+        indices_to_keep = [-2, -11, -31, -91, -181, -366, -1096]
         prices_of_interest = self.price_history[indices_to_keep]
         prices_of_interest = np.where(
             prices_of_interest == 0, ZERO_REPLACE_VALUE, prices_of_interest
         )
         return (self.price - prices_of_interest) / prices_of_interest
+
+    def get_stock_features(self) -> np.ndarray:
+        """Gets the stock features as a numpy array.
+
+        Returns:
+            An array of stock features.
+
+        """
+        output = np.array(
+            [
+                self.price,
+                self.cash,
+                self.earning_value_of_assets,
+                self.latest_quarterly_earnings,
+            ]
+        )
+        return np.append(output, self.get_price_changes_over_time())
 
     def update_price_history(self, price: float) -> np.ndarray:
         """Update the price history of the stock.
@@ -100,3 +117,22 @@ class StockHolding:
 
         """
         return self.stock.price * self.stock_quantity
+
+
+class Portfolio:
+    """The class definition of a portfolio of StockHoldings."""
+
+    def __init__(self, stock_holdings: list[StockHolding]) -> None:
+        """Instantiate the Portfolio class."""
+        self.stock_holdings = stock_holdings
+        self.stock_holding_dict = self.get_stock_holding_dictionary()
+
+    def get_stock_holding_dictionary(self) -> dict[str, StockHolding]:
+        """Gets the stock holding dictionary.
+
+        This function allows StockHoldings to be accessed by stock ID.
+        """
+        return {
+            stock_holding.stock.id: stock_holding
+            for stock_holding in self.stock_holdings
+        }
