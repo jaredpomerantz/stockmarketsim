@@ -14,9 +14,7 @@ class BasePolicy:
     regressions, rounded down to the nearest integer, for each input stock.
     """
 
-    def create_buy_order(
-        self, stock: Stock, stock_quantity: int
-    ) -> list[BuyOrder]:
+    def create_buy_order(self, stock: Stock, stock_quantity: int) -> list[BuyOrder]:
         """Create a buy order for a Stock.
 
         Args:
@@ -26,9 +24,7 @@ class BasePolicy:
         """
         raise NotImplementedError()
 
-    def create_sell_order(
-        self, stock: Stock, stock_quantity: int
-    ) -> list[SellOrder]:
+    def create_sell_order(self, stock: Stock, stock_quantity: int) -> list[SellOrder]:
         """Create a sell order for a Stock.
 
         Args:

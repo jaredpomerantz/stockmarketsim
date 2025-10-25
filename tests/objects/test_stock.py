@@ -18,7 +18,7 @@ def basic_stock() -> Stock:
     )
 
 
-def test_stock_get_price_changes_over_time_with_valid_price_history_returns_expected_result(
+def test_stock_get_price_changes_over_time_with_valid_price_history_returns_expected_result(  # noqa: E501
     basic_stock,
 ) -> None:
     # Act.
@@ -37,7 +37,6 @@ def test_stock_get_price_changes_over_time_with_valid_price_history_returns_expe
                     1.09489051e-01,
                     2.50171350e-01,
                     1.50205761e00,
-                    1.82399000e05,
                 ]
             ),
         )

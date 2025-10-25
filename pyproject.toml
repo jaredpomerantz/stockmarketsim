@@ -9,9 +9,9 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8"
+python = ">=3.10"
 torch = "*"
-numpy = "*"
+numpy = ">=2.2.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "*"
@@ -20,7 +20,7 @@ pytest-cov = "*"
 mypy = "*"
 
 [tool.ruff]
-line-length = 80
+line-length = 88
 target-version = "py312" # Target Python version for syntax and features
 
 lint.select = [

@@ -56,7 +56,7 @@ class Stock:
         3-month, 6-month, 1-year, 3-year, and 5-year periods from the current
         day.
         """
-        indices_to_keep = [-2, -11, -31, -91, -181, -366, -1096]
+        indices_to_keep = np.array([-2, -11, -31, -91, -181, -366, -1096])
         prices_of_interest = self.price_history[indices_to_keep]
         prices_of_interest = np.where(
             prices_of_interest == 0, ZERO_REPLACE_VALUE, prices_of_interest
@@ -78,7 +78,7 @@ class Stock:
                 self.latest_quarterly_earnings,
             ]
         )
-        return np.append(output, self.get_price_changes_over_time())
+        return np.append(output, self.get_price_changes_over_time()).astype(float)
 
     def update_price_history(self, price: float) -> np.ndarray:
         """Update the price history of the stock.
