@@ -7,6 +7,9 @@ from simulator.objects.market import Market
 from simulator.objects.orders import BuyOrder, SellOrder
 from simulator.objects.policies.base_policy import BasePolicy
 from simulator.objects.stock import Portfolio, Stock, StockHolding
+from simulator.objects.policies.architectures.perceptron import MultiLayerPerceptron
+from simulator.objects.policies.architectures import ModelTask
+from simulator.objects.policies.architectures.base_nn import BaseNN
 
 
 class NNPolicy(BasePolicy):
@@ -21,6 +24,8 @@ class NNPolicy(BasePolicy):
         portfolio: Portfolio,
         n_stocks_to_sample: int,
         max_stocks_per_timestep: int,
+        selection_model: BaseNN,
+        valuation_model: BaseNN,
     ) -> None:
         """Initializes the NNPolicy.
 
@@ -38,7 +43,8 @@ class NNPolicy(BasePolicy):
         self.portfolio = portfolio
         self.n_stocks_to_sample = n_stocks_to_sample
         self.max_stocks_per_timestep = max_stocks_per_timestep
-        # include parameters for a neural network.
+        self.selection_model = selection_model
+        self.valuation_model = valuation_model
 
     def generate_input_tensor(
         self, market: Market, portfolio: Portfolio, n_stocks: int
@@ -110,8 +116,19 @@ class NNPolicy(BasePolicy):
             selected_stocks, input_tensor = self.generate_input_tensor(
                 self.market, portfolio_after_buys, self.n_stocks_to_sample
             )
-            # infer with model here
-            # portfolio_after_buys.add_stock_holding()
+            stock_index = self.selection_model.forward(input_tensor)
+            if input_tensor[stock_index] == torch.Tensor([-1] * 12):
+                return buy_orders
+
+            stock_valuation = self.valuation_model.forward(input_tensor[stock_index])
+
+            buy_orders.append(
+                BuyOrder(
+                    stock=selected_stocks[stock_index],
+                    quantity=1,
+                    price=stock_valuation.item(),
+                )
+            )
         return buy_orders
 
     def infer_sell_actions(self, portfolio) -> list[SellOrder]:
