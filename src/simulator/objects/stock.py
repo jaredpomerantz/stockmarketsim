@@ -164,16 +164,13 @@ class Portfolio:
 
         return self.stock_holding_dict
 
-    def get_stock_holding_list_from_dictionary(
-        self, stock_holding_dict: dict[str, StockHolding]
+    def get_stock_holding_list(
+        self
     ) -> list[StockHolding]:
         """Gets a stock holding list from a stock holding dictionary.
-
-        Args:
-            stock_holding_dict: The stock holding dictionary.
 
         Returns:
             A list of stock holdings.
 
         """
-        return list(stock_holding_dict.values())
+        return list(self.stock_holding_dict.values())

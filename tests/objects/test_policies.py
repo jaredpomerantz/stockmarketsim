@@ -4,17 +4,44 @@ import pytest
 import torch
 
 from simulator.objects.market import Market
+from simulator.objects.policies.architectures import ModelTask
+from simulator.objects.policies.architectures.perceptron import MultiLayerPerceptron
 from simulator.objects.policies.nn_policy import NNPolicy
 from simulator.objects.stock import Portfolio, StockHolding
 
+from .test_market import basic_market  # noqa: F401
+
 
 @pytest.fixture()
-def example_policy(basic_market: Market) -> NNPolicy:
+def example_policy(basic_market: Market) -> NNPolicy:  # noqa: F811
     example_portfolio = Portfolio([StockHolding(basic_market.stocks[0], 1)])
-    return NNPolicy(basic_market, example_portfolio, 5, 10)
+    return NNPolicy(
+        market=basic_market,
+        portfolio=example_portfolio,
+        n_stocks_to_sample = 5,
+        max_stocks_per_timestep = 10,
+        buy_selection_model = MultiLayerPerceptron(
+            in_channels = 6,
+            hidden_channels = [32, 16],
+            n_classes = 6,
+            model_task = ModelTask.CLASSIFIER,
+        ),
+        sell_selection_model = MultiLayerPerceptron(
+            in_channels = 6,
+            hidden_channels = [32, 16],
+            n_classes = 6,
+            model_task = ModelTask.CLASSIFIER,
+        ),
+        valuation_model = MultiLayerPerceptron(
+            in_channels = 12,
+            hidden_channels = [32, 16],
+            n_classes = 1,
+            model_task = ModelTask.REGRESSOR,
+        ),
+        )
 
 
-def test_nn_policy_generate_input_tensor_given_valid_input_returns_expected_result(
+def test_nn_policy_generate_buy_input_tensor_given_valid_input_returns_expected_result(
     example_policy,
 ) -> None:
     # Arrange.
@@ -56,7 +83,7 @@ def test_nn_policy_generate_input_tensor_given_valid_input_returns_expected_resu
     ).to(torch.float64)
 
     # Act.
-    _, output = example_policy.generate_input_tensor(
+    _, output = example_policy.generate_buy_input_tensor(
         example_policy.market,
         example_policy.portfolio,
         example_policy.n_stocks_to_sample,
