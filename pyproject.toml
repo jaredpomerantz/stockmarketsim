@@ -9,9 +9,9 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8"
+python = ">=3.10"
 torch = "*"
-numpy = "*"
+numpy = ">=2.2.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "*"
@@ -20,10 +20,10 @@ pytest-cov = "*"
 mypy = "*"
 
 [tool.ruff]
-line-length = 80
+line-length = 88
 target-version = "py312" # Target Python version for syntax and features
 
-select = [
+lint.select = [
     "E",  # pycodestyle errors
     "F",  # Pyflakes
     "W",  # pycodestyle warnings
@@ -34,12 +34,16 @@ select = [
     "UP", # pyupgrade
 ]
 
-ignore = [
-    "E501", # Line too long (handled by formatter)
+lint.ignore = [
     "D100", # Missing docstring in public module
     "D103",
     "D104", # Missing docstring in public package
     "D105", # Missing docstring in magic method
+    "D203",
+    "D211",
+    "D213",
+    "D214",
+    "D401"
 ]
 
 exclude = [

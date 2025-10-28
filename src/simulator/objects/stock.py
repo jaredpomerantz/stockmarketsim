@@ -36,7 +36,7 @@ class Stock:
                 distribution for a day's percent change due to randomness for the stock.
 
         """
-        self.id = uuid.uuid4()
+        self.id = str(uuid.uuid4())
         self.cash = cash
         self.earning_value_of_assets = earning_value_of_assets
         self.latest_quarterly_earnings = latest_quarterly_earnings
@@ -56,12 +56,29 @@ class Stock:
         3-month, 6-month, 1-year, 3-year, and 5-year periods from the current
         day.
         """
-        indices_to_keep = [-2, -11, -31, -91, -181, -366, -1096, 0]
+        indices_to_keep = np.array([-2, -5, -11, -31, -91, -181, -366, -1096, 0])
         prices_of_interest = self.price_history[indices_to_keep]
         prices_of_interest = np.where(
             prices_of_interest == 0, ZERO_REPLACE_VALUE, prices_of_interest
         )
         return (self.price - prices_of_interest) / prices_of_interest
+
+    def get_stock_features(self) -> np.ndarray:
+        """Gets the stock features as a numpy array.
+
+        Returns:
+            An array of stock features.
+
+        """
+        output = np.array(
+            [
+                self.price,
+                self.cash,
+                self.earning_value_of_assets,
+                self.latest_quarterly_earnings,
+            ]
+        )
+        return np.append(output, self.get_price_changes_over_time()).astype(float)
 
     def update_price_history(self, price: float) -> np.ndarray:
         """Update the price history of the stock.
@@ -82,3 +99,76 @@ class Stock:
         Cash is compounded the same whether it's negative or positive.
         """
         self.cash *= (interest_rate_apy + 1) ** (1 / 365)
+
+
+class StockHolding:
+    """The class definition of a holding of a Stock."""
+
+    def __init__(self, stock: Stock, stock_quantity: int) -> None:
+        """Instantiate the StockHolding class."""
+        self.stock = stock
+        self.stock_quantity = stock_quantity
+
+    def get_holding_value(self) -> float:
+        """Calculate the value of the StockHolding.
+
+        Returns:
+            The value of the holding.
+
+        """
+        return self.stock.price * self.stock_quantity
+
+
+class Portfolio:
+    """The class definition of a portfolio of StockHoldings."""
+
+    def __init__(self, stock_holdings: list[StockHolding]) -> None:
+        """Instantiate the Portfolio class."""
+        self.stock_holding_dict = self.get_stock_holding_dictionary(stock_holdings)
+
+    def get_stock_holding_dictionary(
+        self, stock_holdings: list[StockHolding]
+    ) -> dict[str, StockHolding]:
+        """Gets the stock holding dictionary.
+
+        This dictionary allows StockHoldings to be accessed by stock ID.
+
+        Args:
+            stock_holdings: The stock holdings to create a dictionary from.
+
+        Returns:
+            A dictionary mapping stock ids to stock holdings.
+
+        """
+        self.stock_holding_dict = {}
+        for stock_holding in stock_holdings:
+            self.stock_holding_dict = self.add_stock_holding(stock_holding)
+        return self.stock_holding_dict
+
+    def add_stock_holding(self, stock_holding: StockHolding) -> dict[str, StockHolding]:
+        """Adds a stock holding to the portfolio.
+
+        Args:
+            stock_holding: The stock_holding to add to the portfolio.
+
+        Returns:
+            An updated stock holding dictionary.
+
+        """
+        if stock_holding.stock.id in self.stock_holding_dict:
+            self.stock_holding_dict[
+                stock_holding.stock.id
+            ].stock_quantity += stock_holding.stock_quantity
+        else:
+            self.stock_holding_dict[stock_holding.stock.id] = stock_holding
+
+        return self.stock_holding_dict
+
+    def get_stock_holding_list(self) -> list[StockHolding]:
+        """Gets a stock holding list from a stock holding dictionary.
+
+        Returns:
+            A list of stock holdings.
+
+        """
+        return list(self.stock_holding_dict.values())
