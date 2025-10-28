@@ -56,7 +56,7 @@ class Stock:
         3-month, 6-month, 1-year, 3-year, and 5-year periods from the current
         day.
         """
-        indices_to_keep = np.array([-2, -11, -31, -91, -181, -366, -1096])
+        indices_to_keep = np.array([-2, -5, -11, -31, -91, -181, -366, -1096, 0])
         prices_of_interest = self.price_history[indices_to_keep]
         prices_of_interest = np.where(
             prices_of_interest == 0, ZERO_REPLACE_VALUE, prices_of_interest
@@ -164,9 +164,7 @@ class Portfolio:
 
         return self.stock_holding_dict
 
-    def get_stock_holding_list(
-        self
-    ) -> list[StockHolding]:
+    def get_stock_holding_list(self) -> list[StockHolding]:
         """Gets a stock holding list from a stock holding dictionary.
 
         Returns:

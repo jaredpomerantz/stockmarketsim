@@ -31,12 +31,14 @@ def test_stock_get_price_changes_over_time_with_valid_price_history_returns_expe
             np.array(
                 [
                     5.48546352e-04,
+                    2.19780220e-03,
                     5.51267916e-03,
                     1.67224080e-02,
                     5.19031142e-02,
                     1.09489051e-01,
                     2.50171350e-01,
                     1.50205761e00,
+                    1.82399000e05,
                 ]
             ),
         )

@@ -1,7 +1,7 @@
 """Definition for the Participant class."""
 
 from simulator.objects.policies.base_policy import BasePolicy
-from simulator.objects.stock import StockHolding
+from simulator.objects.stock import Portfolio
 
 
 class Participant:
@@ -10,7 +10,7 @@ class Participant:
     Participants own stock and perform trades on the market.
     """
 
-    def __init__(self, stock_portfolio: list[StockHolding], policy: BasePolicy) -> None:
+    def __init__(self, stock_portfolio: Portfolio, policy: BasePolicy) -> None:
         """Initialize the Participant class.
 
         Args:
@@ -26,6 +26,15 @@ class Participant:
         return sum(
             [
                 stock_holding.get_holding_value()
-                for stock_holding in self.stock_portfolio
+                for stock_holding in self.stock_portfolio.get_stock_holding_list()
             ]
         )
+
+    def update_policy(self, market_baseline: float) -> None:
+        """Updates the participant's policy based on performance vs market.
+
+        Args:
+            market_baseline: The total market's performance.
+
+        """
+        # self.policy.update()

@@ -18,27 +18,27 @@ def example_policy(basic_market: Market) -> NNPolicy:  # noqa: F811
     return NNPolicy(
         market=basic_market,
         portfolio=example_portfolio,
-        n_stocks_to_sample = 5,
-        max_stocks_per_timestep = 10,
-        buy_selection_model = MultiLayerPerceptron(
-            in_channels = 6,
-            hidden_channels = [32, 16],
-            n_classes = 6,
-            model_task = ModelTask.CLASSIFIER,
+        n_stocks_to_sample=5,
+        max_stocks_per_timestep=10,
+        buy_selection_model=MultiLayerPerceptron(
+            in_channels=6,
+            hidden_channels=[32, 16],
+            n_classes=6,
+            model_task=ModelTask.CLASSIFIER,
         ),
-        sell_selection_model = MultiLayerPerceptron(
-            in_channels = 6,
-            hidden_channels = [32, 16],
-            n_classes = 6,
-            model_task = ModelTask.CLASSIFIER,
+        sell_selection_model=MultiLayerPerceptron(
+            in_channels=6,
+            hidden_channels=[32, 16],
+            n_classes=6,
+            model_task=ModelTask.CLASSIFIER,
         ),
-        valuation_model = MultiLayerPerceptron(
-            in_channels = 12,
-            hidden_channels = [32, 16],
-            n_classes = 1,
-            model_task = ModelTask.REGRESSOR,
+        valuation_model=MultiLayerPerceptron(
+            in_channels=12,
+            hidden_channels=[32, 16],
+            n_classes=1,
+            model_task=ModelTask.REGRESSOR,
         ),
-        )
+    )
 
 
 def test_nn_policy_generate_buy_input_tensor_given_valid_input_returns_expected_result(
@@ -47,38 +47,70 @@ def test_nn_policy_generate_buy_input_tensor_given_valid_input_returns_expected_
     # Arrange.
     expected_result = torch.Tensor(
         [
-            [-1] * 12,
+            [
+                1.0000e01,
+                1.0000e01,
+                1.0000e01,
+                1.0000e01,
+                1.1593e00,
+                1.0927e00,
+                1.0300e00,
+                1.0147e00,
+                1.0073e00,
+                1.0024e00,
+                1.0008e00,
+                1.0004e00,
+                1.0001e00,
+                0.0000e00,
+            ],
             [
                 1824.0,
                 -10000000.0,
                 500.0,
                 500.0,
                 5.4855e-04,
+                2.1978e-03,
                 5.5127e-03,
                 1.6722e-02,
                 5.1903e-02,
                 1.0949e-01,
                 2.5017e-01,
                 1.5021e00,
+                1.8240e05,
                 1.0,
             ],
-            [0.5, 0.5, 500.0, 500.0, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.0],
+            [
+                0.5,
+                0.5,
+                500.0,
+                500.0,
+                -0.5,
+                -0.5,
+                -0.5,
+                -0.5,
+                -0.5,
+                -0.5,
+                -0.5,
+                -0.5,
+                -0.5,
+                0.0,
+            ],
             [
                 1824.0,
                 500.0,
                 500.0,
                 500.0,
                 5.4855e-04,
+                2.1978e-03,
                 5.5127e-03,
                 1.6722e-02,
                 5.1903e-02,
                 1.0949e-01,
                 2.5017e-01,
                 1.5021e00,
+                1.8240e05,
                 0.0,
             ],
-            [-1] * 12,
-            [-1] * 12,
         ]
     ).to(torch.float64)
 
