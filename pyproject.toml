@@ -18,6 +18,8 @@ ruff = "*"
 pytest = "*"
 pytest-cov = "*"
 mypy = "*"
+ipykernel = "*"
+jupyter = "*"
 
 [tool.ruff]
 line-length = 88
