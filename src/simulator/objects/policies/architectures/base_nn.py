@@ -5,7 +5,7 @@ from abc import abstractmethod
 import torch
 
 
-class BaseNN:
+class BaseNN(torch.nn.Module):
     """The class definition for the MultiLayerPerceptron."""
 
     @abstractmethod

@@ -5,9 +5,7 @@ import torch
 
 from simulator.objects.market import Market
 from simulator.objects.orders import BuyOrder, SellOrder
-from simulator.objects.policies.architectures import ModelTask
 from simulator.objects.policies.architectures.base_nn import BaseNN
-from simulator.objects.policies.architectures.perceptron import MultiLayerPerceptron
 from simulator.objects.policies.base_policy import BasePolicy
 from simulator.objects.stock import Portfolio, Stock, StockHolding
 
@@ -24,8 +22,6 @@ class NNPolicy(BasePolicy):
         portfolio: Portfolio,
         n_stocks_to_sample: int,
         max_stocks_per_timestep: int,
-        buy_selection_model: BaseNN,
-        sell_selection_model: BaseNN,
         valuation_model: BaseNN,
     ) -> None:
         """Initializes the NNPolicy.
@@ -38,8 +34,6 @@ class NNPolicy(BasePolicy):
                 the model to select. For consistency, each input tensor will
                 be the same size regardless of the number of stocks in the market.
             max_stocks_per_timestep: The maximum number of buy/sell actions per step.
-            buy_selection_model: The model responsible for deciding stocks to buy.
-            sell_selection_model: The model responsible for deciding stocks to sell.
             valuation_model: The model responsible for deciding stock value.
 
         """
@@ -48,6 +42,13 @@ class NNPolicy(BasePolicy):
         self.n_stocks_to_sample = n_stocks_to_sample
         self.max_stocks_per_timestep = max_stocks_per_timestep
         self.valuation_model = valuation_model
+
+        self.cash_stock = Stock(10.0, 0, 0, np.array([0.0]), 0.5, 0.0)
+
+        self.selected_stock_history = []
+        self.buy_valuation_history = torch.tensor([[]])
+        self.loss = torch.nn.MSELoss()
+        self.optimizer = torch.optim.Adam(params=self.valuation_model.parameters())
         # What if instead, we assign the policy a model that predicts each stock's price in 30 days?
         # For buy, pick the biggest one and give a price (like maybe 10% toward that projected price from the current price).
         # For sell, pick the most bearish one (same with the 10% toward the projected lower price).
@@ -66,8 +67,7 @@ class NNPolicy(BasePolicy):
             A tensor of stock parameters to input into the model.
 
         """
-        cash_stock = Stock(10.0, 0, 0, np.array([0.0]), 0.5, 0.0)
-        cash_holding = StockHolding(cash_stock, 0)
+        cash_holding = StockHolding(self.cash_stock, 0)
 
         n_stocks_in_market = len(market.stocks)
         selected_stocks = market.stocks
@@ -79,7 +79,7 @@ class NNPolicy(BasePolicy):
                 range(n_stocks_in_market), size=n_stocks, replace=False
             )
             selected_stocks = [market.stocks[i] for i in selected_stock_indices]
-
+        selected_stocks = [self.cash_stock] + selected_stocks
         valid_stocks = torch.Tensor(
             [
                 np.append(
@@ -109,13 +109,13 @@ class NNPolicy(BasePolicy):
             A tensor of stock parameters to input into the model.
 
         """
-        default_stock = Stock(10.0, 0, 0, np.array([0.0]), 0.5, 0.0)
-        default_holding = StockHolding(default_stock, 0)
+        cash_holding = StockHolding(self.cash_stock, 0)
 
         portfolio_stocks = [
             stock_holding.stock for stock_holding in portfolio.get_stock_holding_list()
         ]
-        selected_stocks = [default_stock] + portfolio_stocks
+        selected_stocks = portfolio_stocks
+
         # If the number of available stocks is more than the length of the
         # input tensor, sample n_stocks stocks.
         if len(list(portfolio.stock_holding_dict.keys())) > n_stocks:
@@ -123,15 +123,15 @@ class NNPolicy(BasePolicy):
             selected_stock_indices = np.random.choice(
                 range(n_stocks_in_portfolio), size=n_stocks, replace=False
             )
-            selected_stocks = [default_stock] + [
-                portfolio_stocks[i] for i in selected_stock_indices
-            ]
+            selected_stocks = [portfolio_stocks[i] for i in selected_stock_indices]
+
+        selected_stocks = [self.cash_stock] + selected_stocks
         valid_stocks = torch.Tensor(
             [
                 np.append(
                     stock.get_stock_features(),
                     (
-                        portfolio.stock_holding_dict.get(stock.id) or default_holding
+                        portfolio.stock_holding_dict.get(stock.id) or cash_holding
                     ).stock_quantity,
                 )
                 for stock in selected_stocks
@@ -145,24 +145,32 @@ class NNPolicy(BasePolicy):
         """Infer buy actions based on the current market."""
         best_stock_index = 1
         buy_orders = []
-        portfolio_after_buys = Portfolio(self.portfolio.get_stock_holding_list())
-        while len(buy_orders) < self.max_stocks_per_timestep:
-            selected_stocks, input_tensor = self.generate_buy_input_tensor(
-                self.market, portfolio_after_buys, self.n_stocks_to_sample
-            )
-            valuations = self.valuation_model.forward(input_tensor)
-            current_prices = torch.tensor([stock.price for stock in selected_stocks])
-            projected_percent_change = (valuations - current_prices) / current_prices
+        selected_stocks, input_tensor = self.generate_buy_input_tensor(
+            self.market, self.portfolio, self.n_stocks_to_sample
+        )
+        valuations = self.valuation_model.forward(input_tensor)
+        current_prices = torch.tensor([stock.price for stock in selected_stocks])
+        projected_percent_change = (valuations - current_prices) / current_prices
 
-            best_stock_index = int(torch.argmax(projected_percent_change).item())
-            if best_stock_index == 0:
+        value_stock_pairs = [
+            (
+                projected_percent_change[i],
+                valuations[i],
+                current_prices[i],
+                selected_stocks[i],
+            )
+            for i in range(len(selected_stocks))
+        ]
+
+        sorted_value_stock_pairs = sorted(value_stock_pairs)
+
+        for i in range(self.max_stocks_per_timestep):
+            _, valuation, current_price, selected_stock = sorted_value_stock_pairs[i]
+
+            if selected_stock is self.cash_stock:
                 return buy_orders
 
-            current_stock_price = selected_stocks[best_stock_index].price
-            stock_valuation = float(valuations[best_stock_index].item())
-            price_to_offer = (
-                current_stock_price + (stock_valuation - current_stock_price) * 0.1
-            )
+            price_to_offer = (current_price + (valuation - current_price) * 0.1).item()
             buy_orders.append(
                 BuyOrder(
                     stock=selected_stocks[best_stock_index],
@@ -170,55 +178,61 @@ class NNPolicy(BasePolicy):
                     price=price_to_offer,
                 )
             )
-            portfolio_after_buys.add_stock_holding(
-                StockHolding(selected_stocks[best_stock_index], 1)
-            )
         return buy_orders
 
     def infer_sell_actions(self) -> list[SellOrder]:
         """Infer sell actions based on the current portfolio."""
         best_stock_index = 1
         sell_orders = []
-        portfolio_after_sells = Portfolio(self.portfolio.get_stock_holding_list())
-        while len(sell_orders) < self.max_stocks_per_timestep:
-            selected_stocks, input_tensor = self.generate_sell_input_tensor(
-                self.market, portfolio_after_sells, self.n_stocks_to_sample
-            )
-            valuations = self.valuation_model.forward(input_tensor)
-            current_prices = torch.tensor([stock.price for stock in selected_stocks])
-            projected_percent_change = (valuations - current_prices) / current_prices
+        selected_stocks, input_tensor = self.generate_sell_input_tensor(
+            self.market, self.portfolio, self.n_stocks_to_sample
+        )
+        valuations = self.valuation_model.forward(input_tensor)
+        current_prices = torch.tensor([stock.price for stock in selected_stocks])
+        projected_percent_change = (valuations - current_prices) / current_prices
 
-            worst_stock_index = int(torch.argmin(projected_percent_change).item())
-            if worst_stock_index == 0:
+        value_stock_pairs = [
+            (
+                projected_percent_change[i],
+                valuations[i],
+                current_prices[i],
+                selected_stocks[i],
+            )
+            for i in range(len(selected_stocks))
+        ]
+
+        sorted_value_stock_pairs = sorted(value_stock_pairs)
+
+        for i in range(self.max_stocks_per_timestep):
+            _, valuation, current_price, selected_stock = sorted_value_stock_pairs[i]
+
+            if selected_stock is self.cash_stock:
                 return sell_orders
 
-            current_stock_price = selected_stocks[worst_stock_index].price
-            stock_valuation = float(valuations[best_stock_index].item())
-            price_to_offer = (
-                current_stock_price + (stock_valuation - current_stock_price) * 0.1
-            )
-
+            price_to_offer = (current_price + (valuation - current_price) * 0.1).item()
             sell_orders.append(
                 SellOrder(
-                    stock=selected_stocks[worst_stock_index],
+                    stock=selected_stocks[best_stock_index],
                     quantity=1,
                     price=price_to_offer,
                 )
             )
-            portfolio_after_sells.add_stock_holding(
-                StockHolding(selected_stocks[worst_stock_index], 1)
-            )
         return sell_orders
 
-    def update(self, policy_performance: float, market_baseline: float) -> None:
-        """Updates the policy based on performance relative to market.
+    def update(self) -> None:
+        """Updates the policy based on performance relative to market."""
+        past_stocks = self.selected_stock_history[0]
+        past_stocks_valuations = self.buy_valuation_history[0]
 
-        Args:
-            policy_performance: The performance of this policy.
-            market_baseline: The total market's performance.
+        past_stocks_current_prices = torch.tensor(
+            [stock.price or 0.0 for stock in past_stocks]
+        )
 
-        """
-        loss = market_baseline - policy_performance
+        loss_val = self.loss(past_stocks_valuations, past_stocks_current_prices)
+
+        self.optimizer.zero_grad()
+        loss_val.backward()
+        self.optimizer.step()
 
     def get_cash_features(self) -> torch.Tensor:
         """Gets the features for the cash asset."""
@@ -231,3 +245,20 @@ class NNPolicy(BasePolicy):
             (torch.tensor([10.0, 10.0, 10.0, 10.0]), compounded_rates, null_cash_array),
             dim=0,
         ).unsqueeze(0)
+
+    def update_valuation_histories(
+        self, selected_stocks: list[Stock], valuations: torch.Tensor
+    ) -> None:
+        """Updates the valuation histories with their respective stocks.
+
+        Args:
+            selected_stocks: A list of stocks that were selected to value.
+            valuations: The valuations of the respective selected_stocks]
+
+        """
+        if len(self.selected_stock_history) >= 30:
+            self.selected_stock_history = self.selected_stock_history[1:]
+            self.valuations = self.valuations[1:]
+
+        self.selected_stock_history.append(selected_stocks)
+        self.valuations = torch.cat((self.valuations, valuations.unsqueeze(0)), dim=0)

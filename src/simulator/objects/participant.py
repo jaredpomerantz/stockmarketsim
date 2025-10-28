@@ -1,5 +1,7 @@
 """Definition for the Participant class."""
 
+import uuid
+
 from simulator.objects.policies.base_policy import BasePolicy
 from simulator.objects.stock import Portfolio
 
@@ -18,6 +20,7 @@ class Participant:
             policy: The policy that the participant will use.
 
         """
+        self.id = uuid.uuid4()
         self.stock_portfolio = stock_portfolio
         self.policy = policy
 

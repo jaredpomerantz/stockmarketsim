@@ -20,18 +20,6 @@ def example_policy(basic_market: Market) -> NNPolicy:  # noqa: F811
         portfolio=example_portfolio,
         n_stocks_to_sample=5,
         max_stocks_per_timestep=10,
-        buy_selection_model=MultiLayerPerceptron(
-            in_channels=6,
-            hidden_channels=[32, 16],
-            n_classes=6,
-            model_task=ModelTask.CLASSIFIER,
-        ),
-        sell_selection_model=MultiLayerPerceptron(
-            in_channels=6,
-            hidden_channels=[32, 16],
-            n_classes=6,
-            model_task=ModelTask.CLASSIFIER,
-        ),
         valuation_model=MultiLayerPerceptron(
             in_channels=12,
             hidden_channels=[32, 16],
