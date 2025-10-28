@@ -17,6 +17,7 @@ class MultiLayerPerceptron(BaseNN):
         model_task: ModelTask,
     ) -> None:
         """Initializes the MultiLayerPerceptron class."""
+        super().__init__()
         layers: list[torch.nn.Module] = [torch.nn.Flatten()]
         n_current_channels = in_channels
         for hidden_channel in hidden_channels:

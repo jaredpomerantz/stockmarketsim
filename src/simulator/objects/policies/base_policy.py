@@ -55,7 +55,7 @@ class BasePolicy:
         raise NotImplementedError()
 
     @abstractmethod
-    def update(self, policy_performance: float, market_baseline: float) -> None:
+    def update_policy(self, policy_performance: float, market_baseline: float) -> None:
         """Updates the policy based on performance relative to market.
 
         Args:

@@ -49,9 +49,6 @@ class NNPolicy(BasePolicy):
         self.buy_valuation_history = torch.tensor([[]])
         self.loss = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(params=self.valuation_model.parameters())
-        # What if instead, we assign the policy a model that predicts each stock's price in 30 days?
-        # For buy, pick the biggest one and give a price (like maybe 10% toward that projected price from the current price).
-        # For sell, pick the most bearish one (same with the 10% toward the projected lower price).
 
     def generate_buy_input_tensor(
         self, market: Market, portfolio: Portfolio, n_stocks: int
@@ -79,7 +76,6 @@ class NNPolicy(BasePolicy):
                 range(n_stocks_in_market), size=n_stocks, replace=False
             )
             selected_stocks = [market.stocks[i] for i in selected_stock_indices]
-        selected_stocks = [self.cash_stock] + selected_stocks
         valid_stocks = torch.Tensor(
             [
                 np.append(
@@ -91,7 +87,7 @@ class NNPolicy(BasePolicy):
                 for stock in selected_stocks
             ]
         )
-        return selected_stocks, torch.cat(
+        return [self.cash_stock] + selected_stocks, torch.cat(
             (self.get_cash_features(), valid_stocks), dim=0
         )
 
@@ -125,7 +121,6 @@ class NNPolicy(BasePolicy):
             )
             selected_stocks = [portfolio_stocks[i] for i in selected_stock_indices]
 
-        selected_stocks = [self.cash_stock] + selected_stocks
         valid_stocks = torch.Tensor(
             [
                 np.append(
@@ -137,7 +132,7 @@ class NNPolicy(BasePolicy):
                 for stock in selected_stocks
             ]
         )
-        return selected_stocks, torch.cat(
+        return [self.cash_stock] + selected_stocks, torch.cat(
             (self.get_cash_features(), valid_stocks), dim=0
         )
 
@@ -219,7 +214,7 @@ class NNPolicy(BasePolicy):
             )
         return sell_orders
 
-    def update(self) -> None:
+    def update_policy(self) -> None:
         """Updates the policy based on performance relative to market."""
         past_stocks = self.selected_stock_history[0]
         past_stocks_valuations = self.buy_valuation_history[0]
