@@ -3,7 +3,8 @@
 from abc import abstractmethod
 
 from simulator.objects.orders import BuyOrder, SellOrder
-from simulator.objects.stock import Stock
+from simulator.objects.stock import Stock, Portfolio
+from simulator.objects.market import Market
 
 
 class BasePolicy:
@@ -13,6 +14,17 @@ class BasePolicy:
     will be a defined set of features for different stocks. Outputs will be
     regressions, rounded down to the nearest integer, for each input stock.
     """
+
+    def __init__(self, market: Market, portfolio: Portfolio) -> None:
+        """Initializes the BasePolicy.
+
+        Args:
+            market: The stock market object to sample from.
+            portfolio: The portfolio of the participant.
+
+        """
+        self.market = market
+        self.portfolio = portfolio
 
     def create_buy_order(self, stock: Stock, stock_quantity: int) -> list[BuyOrder]:
         """Create a buy order for a Stock.
@@ -35,32 +47,16 @@ class BasePolicy:
         raise NotImplementedError()
 
     @abstractmethod
-    def infer_buy_actions(self, current_market) -> list[BuyOrder]:
-        """Infer buy actions based on the current market.
-
-        Args:
-            current_market: The current market of stocks.
-
-        """
+    def infer_buy_actions(self) -> list[BuyOrder]:
+        """Infer buy actions based on the current market."""
         raise NotImplementedError()
 
     @abstractmethod
-    def infer_sell_actions(self, portfolio) -> list[SellOrder]:
-        """Infer sell actions based on the current portfolio.
-
-        Args:
-            portfolio: The participant's stock portfolio.
-
-        """
+    def infer_sell_actions(self) -> list[SellOrder]:
+        """Infer sell actions based on the current portfolio."""
         raise NotImplementedError()
 
     @abstractmethod
-    def update_policy(self, policy_performance: float, market_baseline: float) -> None:
-        """Updates the policy based on performance relative to market.
-
-        Args:
-            policy_performance: The performance of this policy.
-            market_baseline: The total market's performance.
-
-        """
+    def update_policy(self) -> None:
+        """Updates the policy based on performance relative to market."""
         raise NotImplementedError()
