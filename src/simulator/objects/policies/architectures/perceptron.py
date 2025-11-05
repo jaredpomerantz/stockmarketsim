@@ -18,7 +18,7 @@ class MultiLayerPerceptron(BaseNN):
     ) -> None:
         """Initializes the MultiLayerPerceptron class."""
         super().__init__()
-        layers: list[torch.nn.Module] = [torch.nn.Flatten()]
+        layers: list[torch.nn.Module] = []
         n_current_channels = in_channels
         for hidden_channel in hidden_channels:
             layers.append(torch.nn.Linear(n_current_channels, hidden_channel))
@@ -43,4 +43,4 @@ class MultiLayerPerceptron(BaseNN):
             The model output.
 
         """
-        return self.network(input)
+        return self.network(input).squeeze()
