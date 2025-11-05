@@ -2,6 +2,7 @@
 
 import uuid
 
+from simulator.objects.orders import BuyOrder, SellOrder
 from simulator.objects.policies.base_policy import BasePolicy
 from simulator.objects.stock import Portfolio
 
@@ -33,11 +34,22 @@ class Participant:
             ]
         )
 
-    def update_policy(self, market_baseline: float) -> None:
+    def get_actions(self) -> tuple[list[BuyOrder], list[SellOrder]]:
+        """Gets actions from the policy.
+
+        Returns:
+            A tuple of BuyOrders and SellOrders.
+
+        """
+        buy_orders = self.policy.infer_buy_actions()
+        sell_orders = self.policy.infer_sell_actions()
+        return (buy_orders, sell_orders)
+
+    def update_policy(self) -> None:
         """Updates the participant's policy based on performance vs market.
 
         Args:
             market_baseline: The total market's performance.
 
         """
-        # self.policy.update()
+        self.policy.update_policy()

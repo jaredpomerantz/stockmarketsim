@@ -47,7 +47,7 @@ class Stock:
         self.price = self.price_history[-1]
 
     def __repr__(self) -> str:
-        return f"Stock {self.id}; Price {self.price}; Cash {self.cash}"
+        return f"(Stock {self.id}; Price {self.price}; Cash {self.cash})"
 
     def get_price_changes_over_time(self) -> np.ndarray:
         """Get the price changes over time.
