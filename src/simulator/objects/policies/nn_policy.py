@@ -7,7 +7,6 @@ import torch
 
 from simulator.objects.market import Market
 from simulator.objects.orders import BuyOrder, SellOrder
-from simulator.objects.policies.architectures.base_nn import BaseNN
 from simulator.objects.policies.base_policy import BasePolicy
 from simulator.objects.stock import Portfolio, Stock, StockHolding
 
@@ -160,7 +159,9 @@ class NNPolicy(BasePolicy):
         selected_stocks, input_tensor = self.generate_buy_input_tensor()
         valuations = self.valuation_model.forward(input_tensor.to(self.device))
 
-        self.update_valuation_histories(selected_stocks=selected_stocks, valuations=valuations)
+        self.update_valuation_histories(
+            selected_stocks=selected_stocks, valuations=valuations
+        )
 
         current_prices = torch.tensor([stock.price for stock in selected_stocks]).to(
             self.device
@@ -243,9 +244,11 @@ class NNPolicy(BasePolicy):
         past_stocks = self.selected_stock_history[0]
         past_stocks_valuations = self.buy_valuation_history[0].to(self.device)
 
-        past_stocks_current_prices = torch.tensor(
-            [stock.price or 0.0 for stock in past_stocks]
-        ).to(self.device).to(torch.float32)
+        past_stocks_current_prices = (
+            torch.tensor([stock.price or 0.0 for stock in past_stocks])
+            .to(self.device)
+            .to(torch.float32)
+        )
 
         loss_val = self.loss(past_stocks_valuations, past_stocks_current_prices)
 
@@ -281,4 +284,3 @@ class NNPolicy(BasePolicy):
 
         self.selected_stock_history.append(selected_stocks)
         self.buy_valuation_history.append(valuations)
-        # self.buy_valuation_history = torch.cat((self.buy_valuation_history, valuations.unsqueeze(0)), dim=0)

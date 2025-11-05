@@ -2,9 +2,9 @@
 
 from abc import abstractmethod
 
-from simulator.objects.orders import BuyOrder, SellOrder
-from simulator.objects.stock import Stock, Portfolio
 from simulator.objects.market import Market
+from simulator.objects.orders import BuyOrder, SellOrder
+from simulator.objects.stock import Portfolio, Stock
 
 
 class BasePolicy:

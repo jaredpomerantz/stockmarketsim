@@ -7,8 +7,6 @@ import torch
 
 from simulator.objects.market import Market
 from simulator.objects.orders import BuyOrder, SellOrder
-from simulator.objects.policies.architectures import ModelTask
-from simulator.objects.policies.architectures.perceptron import MultiLayerPerceptron
 from simulator.objects.policies.nn_policy import NNPolicy
 from simulator.objects.stock import Portfolio, StockHolding
 
