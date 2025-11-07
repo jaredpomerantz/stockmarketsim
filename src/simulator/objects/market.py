@@ -24,7 +24,6 @@ class Market:
         self,
         stocks: list[Stock],
         interest_rate_apy: float,
-        participants: list[Participant],
     ) -> None:
         """Initialize the Market class.
 
@@ -37,12 +36,22 @@ class Market:
         """
         self.stocks = stocks
         self.interest_rate_apy = interest_rate_apy
+
+        self.minimum_stock_price = MINIMUM_STOCK_PRICE
+
+    def add_participants(self, participants: list[Participant]):
+        """Adds the participant list to the market.
+
+        Participant policy instatiation requires the market to already be instantiated
+        Therefore, they must be added after the market initialization.
+
+        Args:
+            participants: The participants in the market.
+        """
         self.participants = participants
         self.participant_id_map = {
             participant.id: participant for participant in self.participants
         }
-
-        self.minimum_stock_price = MINIMUM_STOCK_PRICE
 
     def advance_stocks(self) -> None:
         """Advances the market's stocks forward one day."""
@@ -124,7 +133,9 @@ class Market:
             buy_orders: A list of tuples containing BuyOrders and the orderer's ID.
             sell_orders: A list of tuples containing SellOrders and the orderer's ID.
         """
-        buy_order_stocks = {buy_order[0].stock: [] for buy_order in buy_orders}
+        buy_order_stocks: dict[Stock, list[tuple[Stock, float, str]]] = {
+            buy_order[0].stock: [] for buy_order in buy_orders
+        }
         for buy_order in buy_orders:
             buy_order_stocks[buy_order[0].stock] += [
                 (buy_order[0].stock, buy_order[0].price, buy_order[1])
@@ -181,9 +192,7 @@ class Market:
         buy_orders: list[tuple[BuyOrder, str]] = []
         sell_orders: list[tuple[SellOrder, str]] = []
 
-        participant_list = self.participants.copy()
-        random.shuffle(participant_list)
-        for participant in participant_list:
+        for participant in self.participants:
             participant_buy_orders, participant_sell_orders = (
                 participant.step_participant()
             )

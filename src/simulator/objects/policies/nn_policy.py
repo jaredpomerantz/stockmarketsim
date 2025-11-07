@@ -1,6 +1,7 @@
 """Definition for the Transformer Policy class."""
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
@@ -9,6 +10,9 @@ from simulator.objects.market import Market
 from simulator.objects.orders import BuyOrder, SellOrder
 from simulator.objects.policies.base_policy import BasePolicy
 from simulator.objects.stock import Portfolio, Stock, StockHolding
+
+if TYPE_CHECKING:
+    from simulator.objects.market import Market
 
 
 class NNPolicy(BasePolicy):
@@ -20,7 +24,6 @@ class NNPolicy(BasePolicy):
     def __init__(
         self,
         market: Market,
-        portfolio: Portfolio,
         n_stocks_to_sample: int,
         max_stocks_per_timestep: int,
         valuation_model_path: Path,
@@ -30,7 +33,6 @@ class NNPolicy(BasePolicy):
 
         Args:
             market: The stock market object to sample from.
-            portfolio: The portfolio of the participant.
             n_stocks_to_sample: The number of stocks made visible to the model.
                 This is the length of the input tensor that will be given to
                 the model to select. For consistency, each input tensor will
@@ -38,9 +40,8 @@ class NNPolicy(BasePolicy):
             max_stocks_per_timestep: The maximum number of buy/sell actions per step.
             valuation_model_path: The path to model responsible for valuing stocks.
             valuation_model_noise_std: The standard deviation of noise for weights.
-
         """
-        super().__init__(market=market, portfolio=portfolio)
+        super().__init__(market=market)
 
         self.n_stocks_to_sample = n_stocks_to_sample
         self.max_stocks_per_timestep = max_stocks_per_timestep
@@ -79,7 +80,6 @@ class NNPolicy(BasePolicy):
 
         Returns:
             A tensor of stock parameters to input into the model.
-
         """
         cash_holding = StockHolding(self.cash_stock, 0)
 
@@ -113,7 +113,6 @@ class NNPolicy(BasePolicy):
 
         Returns:
             A tensor of stock parameters to input into the model.
-
         """
         cash_holding = StockHolding(self.cash_stock, 0)
 
@@ -276,7 +275,6 @@ class NNPolicy(BasePolicy):
         Args:
             selected_stocks: A list of stocks that were selected to value.
             valuations: The valuations of the respective selected_stocks]
-
         """
         if len(self.selected_stock_history) >= 30:
             self.selected_stock_history = self.selected_stock_history[1:]

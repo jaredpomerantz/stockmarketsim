@@ -33,6 +33,20 @@ class Participant:
         )
         self.cash = cash
 
+        self.policy.initialize_portfolio(self.stock_portfolio)
+
+    def __repr__(self) -> str:
+        """Defines the string representation of the Participant."""
+        return f"Participant {self.id}"
+
+    def initialize_policy_portfolio(self, stock_portfolio: Portfolio) -> None:
+        """Adds the portfolio to the policy.
+
+        Args:
+            stock_portfolio: The stocks owned by the participant.
+        """
+        self.policy.initialize_portfolio(portfolio=stock_portfolio)
+
     def step_participant(
         self,
     ) -> tuple[list[tuple[BuyOrder, str]], list[tuple[SellOrder, str]]]:

@@ -13,7 +13,9 @@ from .test_policies import example_policy  # noqa: F401
 @pytest.fixture()
 def example_participant(basic_market, example_policy) -> Participant:  # noqa: F811
     example_portfolio = Portfolio([StockHolding(basic_market.stocks[0], 1)])
-    return Participant(stock_portfolio=example_portfolio, policy=example_policy)
+    return Participant(
+        stock_portfolio=example_portfolio, policy=example_policy, cash=1000
+    )
 
 
 def test_participant_get_actions_returns_valid_actions(example_participant) -> None:

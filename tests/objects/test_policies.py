@@ -1,7 +1,5 @@
 """Tests for the Policies module."""
 
-from pathlib import Path
-
 import pytest
 import torch
 
@@ -10,22 +8,22 @@ from simulator.objects.orders import BuyOrder, SellOrder
 from simulator.objects.policies.nn_policy import NNPolicy
 from simulator.objects.stock import Portfolio, StockHolding
 
+from . import TEST_MODULE
 from .test_market import basic_market  # noqa: F401
-
-TEST_MODULE = Path(__file__).parent
 
 
 @pytest.fixture()
 def example_policy(basic_market: Market) -> NNPolicy:  # noqa: F811
     example_portfolio = Portfolio([StockHolding(basic_market.stocks[0], 1)])
-    return NNPolicy(
+    policy = NNPolicy(
         market=basic_market,
-        portfolio=example_portfolio,
         n_stocks_to_sample=5,
         max_stocks_per_timestep=10,
         valuation_model_path=TEST_MODULE / "models" / "model.pt",
         valuation_model_noise_std=0.01,
     )
+    policy.initialize_portfolio(example_portfolio)
+    return policy
 
 
 def test_nn_policy_generate_buy_input_tensor_given_valid_input_returns_expected_result(
