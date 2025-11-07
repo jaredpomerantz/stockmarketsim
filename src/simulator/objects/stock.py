@@ -164,7 +164,9 @@ class Portfolio:
 
         return self.stock_holding_dict
 
-    def remove_stock_holding(self, stock_holding: StockHolding) -> dict[str, StockHolding]:
+    def remove_stock_holding(
+        self, stock_holding: StockHolding
+    ) -> dict[str, StockHolding]:
         """Adds a stock holding to the portfolio.
 
         Args:
@@ -175,10 +177,15 @@ class Portfolio:
         """
         if stock_holding.stock.id not in self.stock_holding_dict:
             return self.stock_holding_dict
-        if stock_holding.stock_quantity >= self.stock_holding_dict[stock_holding.stock.id].stock_quantity:
+        if (
+            stock_holding.stock_quantity
+            >= self.stock_holding_dict[stock_holding.stock.id].stock_quantity
+        ):
             del self.stock_holding_dict[stock_holding.stock.id]
         else:
-            self.stock_holding_dict[stock_holding.stock.id].stock_quantity -= stock_holding.stock_quantity
+            self.stock_holding_dict[
+                stock_holding.stock.id
+            ].stock_quantity -= stock_holding.stock_quantity
         return self.stock_holding_dict
 
     def get_stock_holding_list(self) -> list[StockHolding]:

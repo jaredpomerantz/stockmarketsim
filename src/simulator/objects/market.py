@@ -118,48 +118,63 @@ class Market:
         buy_orders: list[tuple[BuyOrder, str]],
         sell_orders: list[tuple[SellOrder, str]],
     ) -> None:
-        """Resolves the orders in the market."""
-        expanded_buy_orders: list[tuple[Stock, float, str]] = []
-        buy_order_stocks = {buy_order[0].stock for buy_order in buy_orders}
+        """Resolves the orders in the market.
+
+        Args:
+            buy_orders: A list of tuples containing BuyOrders and the orderer's ID.
+            sell_orders: A list of tuples containing SellOrders and the orderer's ID.
+        """
+        buy_order_stocks = {buy_order[0].stock: [] for buy_order in buy_orders}
         for buy_order in buy_orders:
-            expanded_buy_orders += [
+            buy_order_stocks[buy_order[0].stock] += [
                 (buy_order[0].stock, buy_order[0].price, buy_order[1])
                 for _ in range(buy_order[0].quantity)
             ]
 
-        expanded_sell_orders: list[tuple[Stock, float, str]] = []
-        sell_order_stocks = {sell_order[0].stock for sell_order in sell_orders}
+        sell_order_stocks = {sell_order[0].stock: [] for sell_order in sell_orders}
         for sell_order in sell_orders:
-            expanded_sell_orders += [
+            sell_order_stocks[sell_order[0].stock] += [
                 (sell_order[0].stock, sell_order[0].price, sell_order[1])
                 for _ in range(sell_order[0].quantity)
             ]
 
-        while expanded_buy_orders and expanded_sell_orders:
-            if expanded_buy_orders[0][0] not in sell_order_stocks:
-                expanded_buy_orders.pop(0)
+        for buy_order_stock in buy_order_stocks:
+            if buy_order_stock not in sell_order_stocks:
                 continue
-            stock_buy_order_to_execute = expanded_buy_orders[0]
-            if expanded_sell_orders[0][0] != stock_buy_order_to_execute[0]:
-                expanded_sell_orders.pop(0)
-                continue
-            stock_sell_order_to_execute = expanded_sell_orders[0]
-            if stock_buy_order_to_execute[1] > stock_sell_order_to_execute[1]:
-                expanded_buy_orders.pop(0)
-                expanded_sell_orders.pop(0)
-                continue
-            transaction_price = (stock_buy_order_to_execute[1] + stock_sell_order_to_execute[1]) / 2
-            buyer_id = stock_buy_order_to_execute[2]
-            seller_id = stock_sell_order_to_execute[2]
 
-            buying_participant = self.participant_id_map[buyer_id]
-            if buying_participant.cash < 
+            n_shares_to_transfer = min(
+                len(buy_order_stocks[buy_order_stock]),
+                len(sell_order_stocks[buy_order_stock]),
+            )
 
-            stock_holding_to_transfer = StockHolding(stock=stock_buy_order_to_execute[0], stock_quantity=1)
+            for order_number in range(n_shares_to_transfer):
+                # Start with the highest bidding buyer.
+                buy_order_instance = buy_order_stocks[buy_order_stock][order_number]
 
+                # Start with the lowest bidding seller.
+                sell_order_instance = sell_order_stocks[buy_order_stock][-order_number]
 
-            self.participant_id_map[buyer_id]
-        
+                buyer_id = buy_order_instance[2]
+                buyer_participant = self.participant_id_map[buyer_id]
+                seller_id = sell_order_instance[2]
+                seller_participant = self.participant_id_map[seller_id]
+                stock_cost = (buy_order_instance[1] + sell_order_instance[1]) / 2
+
+                if stock_cost > buyer_participant.cash:
+                    continue
+
+                stock_holding_to_transfer = StockHolding(
+                    stock=buy_order_stock, stock_quantity=1
+                )
+
+                buyer_participant.stock_portfolio.add_stock_holding(
+                    stock_holding_to_transfer
+                )
+                buyer_participant.cash -= stock_cost
+                seller_participant.stock_portfolio.remove_stock_holding(
+                    stock_holding_to_transfer
+                )
+                seller_participant.cash += stock_cost
 
     def step_market(self) -> None:
         """Steps the market forward one day."""
@@ -175,9 +190,9 @@ class Market:
             buy_orders += participant_buy_orders
             sell_orders += participant_sell_orders
 
-        # Sort the orders by the stock ID.
-        buy_orders = sorted(buy_orders)
-        sell_orders = sorted(sell_orders)
+        # Sort the orders by the stock ID, then price.
+        buy_orders = sorted(buy_orders, reverse=True)
+        sell_orders = sorted(sell_orders, reverse=True)
         self.resolve_market_orders(buy_orders, sell_orders)
 
         self.advance_stocks()

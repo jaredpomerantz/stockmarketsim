@@ -15,7 +15,9 @@ class Participant:
     Participants own stock and perform trades on the market.
     """
 
-    def __init__(self, stock_portfolio: Portfolio, policy: BasePolicy, cash: float) -> None:
+    def __init__(
+        self, stock_portfolio: Portfolio, policy: BasePolicy, cash: float
+    ) -> None:
         """Initialize the Participant class.
 
         Args:
