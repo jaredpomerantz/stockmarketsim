@@ -1,8 +1,12 @@
 """Definition for the Market class."""
 
+import random
+
 import numpy as np
 
-from simulator.objects.stock import Stock
+from simulator.objects.orders import BuyOrder, SellOrder
+from simulator.objects.participant import Participant
+from simulator.objects.stock import Stock, StockHolding
 
 MINIMUM_STOCK_PRICE = 1.0
 DAYS_IN_A_QUARTER = 92
@@ -16,17 +20,27 @@ class Market:
     creates events that will effect stocks.
     """
 
-    def __init__(self, stocks: list[Stock], interest_rate_apy: float) -> None:
+    def __init__(
+        self,
+        stocks: list[Stock],
+        interest_rate_apy: float,
+        participants: list[Participant],
+    ) -> None:
         """Initialize the Market class.
 
         Args:
             stocks: The stocks to include in the market.
             interest_rate_apy: The interest rate with which stocks' cash grows.
                 This is an annualized percentage yield (APY).
+            participants: The participants in the market.
 
         """
         self.stocks = stocks
         self.interest_rate_apy = interest_rate_apy
+        self.participants = participants
+        self.participant_id_map = {
+            participant.id: participant for participant in self.participants
+        }
 
         self.minimum_stock_price = MINIMUM_STOCK_PRICE
 
@@ -98,3 +112,72 @@ class Market:
         """
         stock.price = 0.0
         self.stocks.remove(stock)
+
+    def resolve_market_orders(
+        self,
+        buy_orders: list[tuple[BuyOrder, str]],
+        sell_orders: list[tuple[SellOrder, str]],
+    ) -> None:
+        """Resolves the orders in the market."""
+        expanded_buy_orders: list[tuple[Stock, float, str]] = []
+        buy_order_stocks = {buy_order[0].stock for buy_order in buy_orders}
+        for buy_order in buy_orders:
+            expanded_buy_orders += [
+                (buy_order[0].stock, buy_order[0].price, buy_order[1])
+                for _ in range(buy_order[0].quantity)
+            ]
+
+        expanded_sell_orders: list[tuple[Stock, float, str]] = []
+        sell_order_stocks = {sell_order[0].stock for sell_order in sell_orders}
+        for sell_order in sell_orders:
+            expanded_sell_orders += [
+                (sell_order[0].stock, sell_order[0].price, sell_order[1])
+                for _ in range(sell_order[0].quantity)
+            ]
+
+        while expanded_buy_orders and expanded_sell_orders:
+            if expanded_buy_orders[0][0] not in sell_order_stocks:
+                expanded_buy_orders.pop(0)
+                continue
+            stock_buy_order_to_execute = expanded_buy_orders[0]
+            if expanded_sell_orders[0][0] != stock_buy_order_to_execute[0]:
+                expanded_sell_orders.pop(0)
+                continue
+            stock_sell_order_to_execute = expanded_sell_orders[0]
+            if stock_buy_order_to_execute[1] > stock_sell_order_to_execute[1]:
+                expanded_buy_orders.pop(0)
+                expanded_sell_orders.pop(0)
+                continue
+            transaction_price = (stock_buy_order_to_execute[1] + stock_sell_order_to_execute[1]) / 2
+            buyer_id = stock_buy_order_to_execute[2]
+            seller_id = stock_sell_order_to_execute[2]
+
+            buying_participant = self.participant_id_map[buyer_id]
+            if buying_participant.cash < 
+
+            stock_holding_to_transfer = StockHolding(stock=stock_buy_order_to_execute[0], stock_quantity=1)
+
+
+            self.participant_id_map[buyer_id]
+        
+
+    def step_market(self) -> None:
+        """Steps the market forward one day."""
+        buy_orders: list[tuple[BuyOrder, str]] = []
+        sell_orders: list[tuple[SellOrder, str]] = []
+
+        participant_list = self.participants.copy()
+        random.shuffle(participant_list)
+        for participant in participant_list:
+            participant_buy_orders, participant_sell_orders = (
+                participant.step_participant()
+            )
+            buy_orders += participant_buy_orders
+            sell_orders += participant_sell_orders
+
+        # Sort the orders by the stock ID.
+        buy_orders = sorted(buy_orders)
+        sell_orders = sorted(sell_orders)
+        self.resolve_market_orders(buy_orders, sell_orders)
+
+        self.advance_stocks()

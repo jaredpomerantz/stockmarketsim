@@ -164,6 +164,23 @@ class Portfolio:
 
         return self.stock_holding_dict
 
+    def remove_stock_holding(self, stock_holding: StockHolding) -> dict[str, StockHolding]:
+        """Adds a stock holding to the portfolio.
+
+        Args:
+            stock_holding: The stock_holding to add to the portfolio.
+
+        Returns:
+            An updated stock holding dictionary.
+        """
+        if stock_holding.stock.id not in self.stock_holding_dict:
+            return self.stock_holding_dict
+        if stock_holding.stock_quantity >= self.stock_holding_dict[stock_holding.stock.id].stock_quantity:
+            del self.stock_holding_dict[stock_holding.stock.id]
+        else:
+            self.stock_holding_dict[stock_holding.stock.id].stock_quantity -= stock_holding.stock_quantity
+        return self.stock_holding_dict
+
     def get_stock_holding_list(self) -> list[StockHolding]:
         """Gets a stock holding list from a stock holding dictionary.
 
@@ -172,3 +189,14 @@ class Portfolio:
 
         """
         return list(self.stock_holding_dict.values())
+
+    def get_stock_portfolio_value(self) -> float:
+        """Gets the total stock portfolio value.
+
+        Returns:
+            The value of the stock portfolio.
+        """
+        return sum(
+            stock_holding.stock.price * stock_holding.stock_quantity
+            for stock_holding in self.get_stock_holding_list()
+        )

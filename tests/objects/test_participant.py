@@ -1,6 +1,5 @@
 """Tests for the Participant module."""
 
-
 import pytest
 
 from simulator.objects.orders import BuyOrder, SellOrder
