@@ -1,7 +1,5 @@
 """Definition for the Market class."""
 
-import random
-
 import numpy as np
 
 from simulator.objects.orders import BuyOrder, SellOrder

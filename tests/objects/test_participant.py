@@ -6,7 +6,15 @@ from simulator.objects.orders import BuyOrder, SellOrder
 from simulator.objects.participant import Participant
 from simulator.objects.stock import Portfolio, StockHolding
 
-from .test_market import basic_market  # noqa: F401
+from .test_market import (  # noqa: F401
+    basic_market,
+    market_with_no_participants,
+    participant1,
+    participant2,
+    stock1,
+    stock2,
+    stock3,
+)
 from .test_policies import example_policy  # noqa: F401
 
 

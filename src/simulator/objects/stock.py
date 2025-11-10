@@ -55,7 +55,7 @@ class Stock:
         return self.id == other.id
 
     def __hash__(self) -> int:
-        return uuid.UUID(self.id).int # type: ignore
+        return uuid.UUID(self.id).int  # type: ignore
 
     def get_price_changes_over_time(self) -> np.ndarray:
         """Get the price changes over time.
@@ -127,7 +127,10 @@ class StockHolding:
         Args:
             other: The other StockHolding object to compare.
         """
-        return self.stock.id == other.stock.id and self.stock_quantity == other.stock_quantity
+        return (
+            self.stock.id == other.stock.id
+            and self.stock_quantity == other.stock_quantity
+        )
 
     def __lt__(self, other) -> bool:
         """Defines less-than condition for StockHolding objects.
@@ -193,7 +196,7 @@ class Portfolio:
             return False
         return all(
             self_stock_holding_list[i] == other_stock_holding_list[i]
-                for i in range(len(self_stock_holding_list))
+            for i in range(len(self_stock_holding_list))
         )
 
     def get_stock_holding_dictionary(

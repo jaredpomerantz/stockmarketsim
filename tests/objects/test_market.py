@@ -1,7 +1,5 @@
 """Tests for the Market module."""
 
-from pathlib import Path
-
 import numpy as np
 import pytest
 
@@ -114,6 +112,59 @@ def test_market_resolve_market_orders_executes_single_trade_successfully(
         [StockHolding(stock1, 1), StockHolding(stock2, 1), StockHolding(stock3, 1)]
     )
     expected_participant2_cash = 952.5
+
+    # Act.
+    basic_market.resolve_market_orders(
+        buy_orders=[(BuyOrder(stock1, 1, 50.0), participant2.id)],
+        sell_orders=[(SellOrder(stock1, 1, 45.0), participant1.id)],
+    )
+
+    # Assert.
+    assert participant1.stock_portfolio == expected_participant1_portfolio
+    assert participant1.cash == expected_participant1_cash
+    assert participant2.stock_portfolio == expected_participant2_portfolio
+    assert participant2.cash == expected_participant2_cash
+
+
+def test_market_resolve_market_orders_executes_multiple_trades_successfully(
+    stock1, stock2, stock3, basic_market, participant1, participant2
+) -> None:
+    # Arrange.
+    expected_participant1_portfolio = Portfolio([StockHolding(stock1, 2), StockHolding(stock2, 1)])
+    expected_participant1_cash = 992.5
+    expected_participant2_portfolio = Portfolio(
+        [StockHolding(stock1, 1), StockHolding(stock3, 1)]
+    )
+    expected_participant2_cash = 1007.5
+
+    # Act.
+    basic_market.resolve_market_orders(
+        buy_orders=[
+            (BuyOrder(stock1, 1, 50.0), participant2.id),
+            (BuyOrder(stock2, 1, 60.0), participant1.id),
+        ],
+        sell_orders=[
+            (SellOrder(stock1, 1, 45.0), participant1.id),
+            (SellOrder(stock2, 1, 50.0), participant2.id),
+        ],
+    )
+
+    # Assert.
+    assert participant1.stock_portfolio == expected_participant1_portfolio
+    assert participant1.cash == expected_participant1_cash
+    assert participant2.stock_portfolio == expected_participant2_portfolio
+    assert participant2.cash == expected_participant2_cash
+
+
+def test_market_resolve_market_orders_with_low_buyer_cash_does_not_execute_single_trade(
+    stock1, stock2, stock3, basic_market, participant1, participant2
+) -> None:
+    # Arrange.
+    participant2.cash = 0
+    expected_participant1_portfolio = participant1.stock_portfolio
+    expected_participant1_cash = participant1.cash
+    expected_participant2_portfolio = participant2.stock_portfolio
+    expected_participant2_cash = participant2.cash
 
     # Act.
     basic_market.resolve_market_orders(

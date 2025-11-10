@@ -9,7 +9,7 @@ import torch
 from simulator.objects.market import Market
 from simulator.objects.orders import BuyOrder, SellOrder
 from simulator.objects.policies.base_policy import BasePolicy
-from simulator.objects.stock import Portfolio, Stock, StockHolding
+from simulator.objects.stock import Stock, StockHolding
 
 if TYPE_CHECKING:
     from simulator.objects.market import Market

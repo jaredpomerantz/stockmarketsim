@@ -7,7 +7,7 @@ from simulator.objects.orders import BuyOrder, SellOrder
 from simulator.objects.stock import Portfolio, Stock
 
 if TYPE_CHECKING:
-    from simulator.objects.market import Market
+    pass
 
 
 class BasePolicy:

@@ -9,7 +9,15 @@ from simulator.objects.policies.nn_policy import NNPolicy
 from simulator.objects.stock import Portfolio, StockHolding
 
 from . import TEST_MODULE
-from .test_market import basic_market  # noqa: F401
+from .test_market import (  # noqa: F401
+    basic_market,
+    market_with_no_participants,
+    participant1,
+    participant2,
+    stock1,
+    stock2,
+    stock3,
+)
 
 
 @pytest.fixture()
@@ -18,6 +26,25 @@ def example_policy(basic_market: Market) -> NNPolicy:  # noqa: F811
     policy = NNPolicy(
         market=basic_market,
         n_stocks_to_sample=5,
+        max_stocks_per_timestep=10,
+        valuation_model_path=TEST_MODULE / "models" / "model.pt",
+        valuation_model_noise_std=0.01,
+    )
+    policy.initialize_portfolio(example_portfolio)
+    return policy
+
+
+@pytest.fixture()
+def example_policy_small_sampler(basic_market: Market) -> NNPolicy:  # noqa: F811
+    example_portfolio = Portfolio(
+        [
+            StockHolding(basic_market.stocks[0], 1),
+            StockHolding(basic_market.stocks[1], 1),
+        ]
+    )
+    policy = NNPolicy(
+        market=basic_market,
+        n_stocks_to_sample=1,
         max_stocks_per_timestep=10,
         valuation_model_path=TEST_MODULE / "models" / "model.pt",
         valuation_model_noise_std=0.01,
@@ -117,6 +144,13 @@ def test_nn_policy_infer_buy_actions_completes(example_policy) -> None:
         assert buy_actions == []
 
 
+def test_nn_policy_infer_buy_actions_with_small_sampler_completes(
+    example_policy_small_sampler,
+) -> None:
+    # Act.
+    _ = example_policy_small_sampler.infer_buy_actions()
+
+
 def test_nn_policy_generate_sell_input_tensor_given_valid_input_returns_expected_result(
     example_policy,
 ) -> None:
@@ -174,3 +208,10 @@ def test_nn_policy_infer_sell_actions_completes(example_policy) -> None:
         assert isinstance(sell_actions[0], SellOrder)
     else:
         assert sell_actions == []
+
+
+def test_nn_policy_infer_sell_actions_with_small_sampler_completes(
+    example_policy_small_sampler,
+) -> None:
+    # Act.
+    _ = example_policy_small_sampler.infer_sell_actions()
