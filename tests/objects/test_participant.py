@@ -1,20 +1,29 @@
 """Tests for the Participant module."""
 
-
 import pytest
 
 from simulator.objects.orders import BuyOrder, SellOrder
 from simulator.objects.participant import Participant
 from simulator.objects.stock import Portfolio, StockHolding
 
-from .test_market import basic_market  # noqa: F401
+from .test_market import (  # noqa: F401
+    basic_market,
+    market_with_no_participants,
+    participant1,
+    participant2,
+    stock1,
+    stock2,
+    stock3,
+)
 from .test_policies import example_policy  # noqa: F401
 
 
 @pytest.fixture()
 def example_participant(basic_market, example_policy) -> Participant:  # noqa: F811
     example_portfolio = Portfolio([StockHolding(basic_market.stocks[0], 1)])
-    return Participant(stock_portfolio=example_portfolio, policy=example_policy)
+    return Participant(
+        stock_portfolio=example_portfolio, policy=example_policy, cash=1000
+    )
 
 
 def test_participant_get_actions_returns_valid_actions(example_participant) -> None:

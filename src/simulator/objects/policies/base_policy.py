@@ -1,10 +1,13 @@
 """Definition for the Policy class."""
 
 from abc import abstractmethod
+from typing import TYPE_CHECKING
 
-from simulator.objects.market import Market
 from simulator.objects.orders import BuyOrder, SellOrder
 from simulator.objects.stock import Portfolio, Stock
+
+if TYPE_CHECKING:
+    pass
 
 
 class BasePolicy:
@@ -15,15 +18,21 @@ class BasePolicy:
     regressions, rounded down to the nearest integer, for each input stock.
     """
 
-    def __init__(self, market: Market, portfolio: Portfolio) -> None:
+    def __init__(self, market) -> None:
         """Initializes the BasePolicy.
 
         Args:
             market: The stock market object to sample from.
-            portfolio: The portfolio of the participant.
 
         """
         self.market = market
+
+    def initialize_portfolio(self, portfolio: Portfolio) -> None:
+        """Initializes the portfolio for the policy.
+
+        Args:
+            portfolio: The portfolio of the participant.
+        """
         self.portfolio = portfolio
 
     def create_buy_order(self, stock: Stock, stock_quantity: int) -> list[BuyOrder]:

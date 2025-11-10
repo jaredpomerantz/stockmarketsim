@@ -47,7 +47,15 @@ class Stock:
         self.price = self.price_history[-1]
 
     def __repr__(self) -> str:
+        """Defines string representation for the Stock object."""
         return f"(Stock {self.id}; Price {self.price}; Cash {self.cash})"
+
+    def __eq__(self, other) -> bool:
+        """Defines the equality condition for the Stock object."""
+        return self.id == other.id
+
+    def __hash__(self) -> int:
+        return uuid.UUID(self.id).int  # type: ignore
 
     def get_price_changes_over_time(self) -> np.ndarray:
         """Get the price changes over time.
@@ -109,6 +117,53 @@ class StockHolding:
         self.stock = stock
         self.stock_quantity = stock_quantity
 
+    def __repr__(self) -> str:
+        """Defines the string representation of the StockHolding."""
+        return f"Stock: {self.stock}; quantity: {self.stock_quantity}"
+
+    def __eq__(self, other) -> bool:
+        """Defines equality condition for StockHolding objects.
+
+        Args:
+            other: The other StockHolding object to compare.
+        """
+        return (
+            self.stock.id == other.stock.id
+            and self.stock_quantity == other.stock_quantity
+        )
+
+    def __lt__(self, other) -> bool:
+        """Defines less-than condition for StockHolding objects.
+
+        Args:
+            other: The other StockHolding object to compare.
+        """
+        return self.stock.id < other.stock.id
+
+    def __le__(self, other) -> bool:
+        """Defines less-than-or-equal condition for StockHolding objects.
+
+        Args:
+            other: The other StockHolding object to compare.
+        """
+        return self.stock.id <= other.stock.id
+
+    def __gt__(self, other) -> bool:
+        """Defines greater-than condition for StockHolding objects.
+
+        Args:
+            other: The other StockHolding object to compare.
+        """
+        return self.stock.id > other.stock.id
+
+    def __ge__(self, other) -> bool:
+        """Defines greater-than-or-equal condition for StockHolding objects.
+
+        Args:
+            other: The other StockHolding object to compare.
+        """
+        return self.stock.id >= other.stock.id
+
     def get_holding_value(self) -> float:
         """Calculate the value of the StockHolding.
 
@@ -125,6 +180,24 @@ class Portfolio:
     def __init__(self, stock_holdings: list[StockHolding]) -> None:
         """Instantiate the Portfolio class."""
         self.stock_holding_dict = self.get_stock_holding_dictionary(stock_holdings)
+
+    def __repr__(self) -> str:
+        """Define the string representation of the Portfolio."""
+        output = ""
+        for stock_holding in self.get_stock_holding_list():
+            output += stock_holding.__repr__() + "\n"
+        return output
+
+    def __eq__(self, other) -> bool:
+        """Defines the equality condition for the Portfolio object."""
+        self_stock_holding_list = self.get_stock_holding_list()
+        other_stock_holding_list = other.get_stock_holding_list()
+        if len(self_stock_holding_list) != len(other_stock_holding_list):
+            return False
+        return all(
+            self_stock_holding_list[i] == other_stock_holding_list[i]
+            for i in range(len(self_stock_holding_list))
+        )
 
     def get_stock_holding_dictionary(
         self, stock_holdings: list[StockHolding]
@@ -164,11 +237,45 @@ class Portfolio:
 
         return self.stock_holding_dict
 
+    def remove_stock_holding(
+        self, stock_holding: StockHolding
+    ) -> dict[str, StockHolding]:
+        """Adds a stock holding to the portfolio.
+
+        Args:
+            stock_holding: The stock_holding to add to the portfolio.
+
+        Returns:
+            An updated stock holding dictionary.
+        """
+        if stock_holding.stock.id not in self.stock_holding_dict:
+            return self.stock_holding_dict
+        if (
+            stock_holding.stock_quantity
+            >= self.stock_holding_dict[stock_holding.stock.id].stock_quantity
+        ):
+            del self.stock_holding_dict[stock_holding.stock.id]
+        else:
+            self.stock_holding_dict[
+                stock_holding.stock.id
+            ].stock_quantity -= stock_holding.stock_quantity
+        return self.stock_holding_dict
+
     def get_stock_holding_list(self) -> list[StockHolding]:
-        """Gets a stock holding list from a stock holding dictionary.
+        """Gets a stock holding list from the stock holding dictionary.
 
         Returns:
             A list of stock holdings.
-
         """
-        return list(self.stock_holding_dict.values())
+        return sorted(list(self.stock_holding_dict.values()))  # type: ignore  # noqa: C414
+
+    def get_stock_portfolio_value(self) -> float:
+        """Gets the total stock portfolio value.
+
+        Returns:
+            The value of the stock portfolio.
+        """
+        return sum(
+            stock_holding.stock.price * stock_holding.stock_quantity
+            for stock_holding in self.get_stock_holding_list()
+        )
