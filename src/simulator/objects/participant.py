@@ -55,10 +55,7 @@ class Participant:
         Returns:
             A tuple of BuyOrders and SellOrders.
         """
-        self.stock_portfolio_value_history = np.append(
-            self.stock_portfolio_value_history[1:],
-            [self.stock_portfolio.get_stock_portfolio_value()],
-        )
+        self.stock_portfolio.update_portfolio_value_history()
         self.update_policy()
         buy_orders, sell_orders = self.get_actions()
         buy_orders_with_id = [(buy_order, self.id) for buy_order in buy_orders]
@@ -67,12 +64,7 @@ class Participant:
 
     def get_stock_portfolio_value(self) -> float:
         """Get the total value of the Participant's stock portfolio."""
-        return sum(
-            [
-                stock_holding.get_holding_value()
-                for stock_holding in self.stock_portfolio.get_stock_holding_list()
-            ]
-        )
+        return self.stock_portfolio.get_stock_portfolio_value()
 
     def get_actions(self) -> tuple[list[BuyOrder], list[SellOrder]]:
         """Gets actions from the policy.
