@@ -45,6 +45,7 @@ class Stock:
         self.stock_volatility = stock_volatility
 
         self.price = self.price_history[-1]
+        self.days_since_earnings = int(np.random.uniform(0, 92, size=(1,)))
 
     def __repr__(self) -> str:
         """Defines string representation for the Stock object."""
@@ -56,6 +57,34 @@ class Stock:
 
     def __hash__(self) -> int:
         return uuid.UUID(self.id).int  # type: ignore
+
+    def step(self) -> None:
+        """Steps the stock forward.
+
+        Includes an update for cash and earning value of assets.
+        """
+        investment: float = float(np.random.random(size=(1,))) * (1000 + max(0, self.cash))
+        self.cash -= investment
+        self.earning_value_of_assets += (
+            float(np.random.normal(loc=self.quality_of_leadership, scale=1.0))
+            * investment
+        )
+        if self.days_since_earnings == 92:
+            self.days_since_earnings = 0
+            self.report_earnings()
+        else:
+            self.days_since_earnings += 1
+
+    def report_earnings(self) -> None:
+        """Reports earnings and updates relevant stock attributes."""
+        self.latest_quarterly_earnings = float(
+                np.random.normal(
+                    loc=self.earning_value_of_assets,
+                    scale=self.earning_value_of_assets / 5,
+                    size=(1,),
+                )
+            )
+        self.cash += self.latest_quarterly_earnings
 
     def get_price_changes_over_time(self) -> np.ndarray:
         """Get the price changes over time.
@@ -180,6 +209,7 @@ class Portfolio:
     def __init__(self, stock_holdings: list[StockHolding]) -> None:
         """Instantiate the Portfolio class."""
         self.stock_holding_dict = self.get_stock_holding_dictionary(stock_holdings)
+        self.value_history = np.ones(shape=(1825,)) * self.get_stock_portfolio_value()
 
     def __repr__(self) -> str:
         """Define the string representation of the Portfolio."""
@@ -278,4 +308,11 @@ class Portfolio:
         return sum(
             stock_holding.stock.price * stock_holding.stock_quantity
             for stock_holding in self.get_stock_holding_list()
+        )
+
+    def update_portfolio_value_history(self) -> None:
+        """Updates the portfolio value history with latest portfolio value."""
+        self.value_history = np.append(
+            self.value_history[1:],
+            [self.get_stock_portfolio_value()],
         )

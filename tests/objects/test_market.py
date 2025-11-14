@@ -130,7 +130,9 @@ def test_market_resolve_market_orders_executes_multiple_trades_successfully(
     stock1, stock2, stock3, basic_market, participant1, participant2
 ) -> None:
     # Arrange.
-    expected_participant1_portfolio = Portfolio([StockHolding(stock1, 2), StockHolding(stock2, 1)])
+    expected_participant1_portfolio = Portfolio(
+        [StockHolding(stock1, 2), StockHolding(stock2, 1)]
+    )
     expected_participant1_cash = 992.5
     expected_participant2_portfolio = Portfolio(
         [StockHolding(stock1, 1), StockHolding(stock3, 1)]

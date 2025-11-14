@@ -60,6 +60,7 @@ class Market:
             stock.compound_cash(self.interest_rate_apy)
             if self.check_stock_for_delisting(stock):
                 stocks_to_delist.append(stock)
+            stock.step()
 
         for stock in stocks_to_delist:
             self.delist_stock(stock)
