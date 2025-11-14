@@ -53,3 +53,8 @@ def test_stock_update_price_history_with_valid_price_returns_expected_result(
 
     # Assert.
     assert np.all(np.isclose(result, np.arange(1, 1826)))
+
+
+def test_stock_step_completes(basic_stock) -> None:
+    # Act.
+    basic_stock.step()

@@ -55,14 +55,16 @@ class Market:
         """Advances the market's stocks forward one day."""
         stocks_to_delist = []
         for stock in self.stocks:
+            if self.check_stock_for_delisting(stock):
+                stocks_to_delist.append(stock)
+                continue
             stock.price = self.inject_noise_into_stock_price(stock)
             stock.update_price_history(stock.price)
             stock.compound_cash(self.interest_rate_apy)
-            if self.check_stock_for_delisting(stock):
-                stocks_to_delist.append(stock)
             stock.step()
 
         for stock in stocks_to_delist:
+            print(f"delisting stock: {stock}")
             self.delist_stock(stock)
 
     def inject_noise_into_stock_price(self, stock: Stock) -> float:
@@ -76,7 +78,6 @@ class Market:
 
         Returns:
             An updated stock price.
-
         """
         updated_price = stock.price + np.random.normal(
             0, stock.stock_volatility * stock.price
@@ -119,6 +120,7 @@ class Market:
             stock: The stock to delist.
         """
         stock.price = 0.0
+        stock.update_price_history(stock.price)
         self.stocks.remove(stock)
 
     def resolve_market_orders(
@@ -148,6 +150,7 @@ class Market:
                 for _ in range(sell_order[0].quantity)
             ]
 
+        print(f"Number of buy order stocks: {len(buy_order_stocks.keys())}")
         for buy_order_stock in buy_order_stocks:
             if buy_order_stock not in sell_order_stocks:
                 continue
@@ -185,6 +188,7 @@ class Market:
                     stock_holding_to_transfer
                 )
                 seller_participant.cash += stock_cost
+                stock_holding_to_transfer.stock.price = stock_cost
 
     def step_market(self) -> None:
         """Steps the market forward one day."""

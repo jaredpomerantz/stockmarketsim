@@ -29,7 +29,7 @@ class Participant:
         self.stock_portfolio = stock_portfolio
         self.policy = policy
         self.stock_portfolio_value_history = (
-            np.ones(shape=(1825,)) * self.stock_portfolio.get_stock_portfolio_value()
+            np.ones(shape=(1825,), dtype=float) * self.stock_portfolio.get_stock_portfolio_value()
         )
         self.cash = cash
 

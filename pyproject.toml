@@ -61,7 +61,6 @@ exclude = [
     "dist",
     ".venv",
     "venv",
-    "examples"
 ]
 
 # per-file-ignores = { "__init__.py" = ["F401"], "tests/*.py" = ["D"] }
