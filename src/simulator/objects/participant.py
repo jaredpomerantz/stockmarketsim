@@ -28,9 +28,6 @@ class Participant:
         self.id = str(uuid.uuid4())
         self.stock_portfolio = stock_portfolio
         self.policy = policy
-        self.stock_portfolio_value_history = (
-            np.ones(shape=(1825,), dtype=float) * self.stock_portfolio.get_stock_portfolio_value()
-        )
         self.cash = cash
 
         self.policy.initialize_portfolio(self.stock_portfolio)
@@ -75,6 +72,7 @@ class Participant:
         """
         buy_orders = self.policy.infer_buy_actions()
         sell_orders = self.policy.infer_sell_actions()
+        # print(buy_orders, sell_orders)
         return (buy_orders, sell_orders)
 
     def update_policy(self) -> None:

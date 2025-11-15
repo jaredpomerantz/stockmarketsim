@@ -56,7 +56,7 @@ class NNPolicy(BasePolicy):
         self.valuation_model_noise_std = valuation_model_noise_std
         self.inject_noise_into_model_weights()
 
-        self.cash_stock = Stock(10.0, 0, 0, np.array([0.0]), 0.5, 0.0)
+        self.cash_stock = Stock(1.0, 0, 0, np.array([1.0]), 0.5, 0.0)
 
         self.selected_stock_history = []
         self.buy_valuation_history = []
@@ -176,6 +176,9 @@ class NNPolicy(BasePolicy):
         projected_percent_change = (valuations - current_prices) / (
             current_prices + 1e-8
         )
+        projected_percent_change[0] = torch.clamp(
+            projected_percent_change[0], 0.98, 1.05
+        )
 
         value_stock_pairs: list[tuple[float, float, float, Stock]] = [
             (
@@ -192,10 +195,10 @@ class NNPolicy(BasePolicy):
         for i in range(self.max_stocks_per_timestep):
             _, valuation, current_price, selected_stock = sorted_value_stock_pairs[i]
 
-            if selected_stock == self.cash_stock:
+            if selected_stock is self.cash_stock:
                 return buy_orders
 
-            price_to_offer = (current_price + (valuation - current_price) * 0.1)
+            price_to_offer = current_price + (valuation - current_price) * 0.1
             buy_orders.append(
                 BuyOrder(
                     stock=selected_stocks[i],
@@ -203,6 +206,7 @@ class NNPolicy(BasePolicy):
                     price=price_to_offer,
                 )
             )
+        print(buy_orders)
         return buy_orders
 
     def infer_sell_actions(self) -> list[SellOrder]:
@@ -216,6 +220,9 @@ class NNPolicy(BasePolicy):
             self.device
         )
         projected_percent_change = (valuations - current_prices) / current_prices
+        projected_percent_change[0] = torch.clamp(
+            projected_percent_change[0], 0.98, 1.05
+        )
 
         value_stock_pairs: list[tuple[float, float, float, Stock]] = [
             (
@@ -232,13 +239,10 @@ class NNPolicy(BasePolicy):
         for i in range(self.max_stocks_per_timestep):
             _, valuation, current_price, selected_stock = sorted_value_stock_pairs[i]
 
-            if selected_stock == self.cash_stock:
+            if selected_stock is self.cash_stock:
                 return sell_orders
 
-            price_to_offer = (current_price + (valuation - current_price) * 0.1)
-            if price_to_offer < 0.0:
-                print(f"current price: {current_price}, price_to_offer: {price_to_offer}, stock: {selected_stock}")
-                print(selected_stock.price_history)
+            price_to_offer = current_price + (valuation - current_price) * 0.1
             sell_orders.append(
                 SellOrder(
                     stock=selected_stocks[i],
@@ -253,7 +257,6 @@ class NNPolicy(BasePolicy):
         if len(self.selected_stock_history) < 30:
             return
         past_stocks: torch.Tensor = self.buy_input_tensor_history[0]
-        # past_stocks_valuations = self.buy_valuation_history[0].to(self.device)
 
         past_stocks_current_prices = (
             torch.tensor(

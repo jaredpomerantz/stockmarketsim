@@ -99,7 +99,9 @@ class Stock:
 
         Includes an update for cash and earning value of assets.
         """
-        investment: float = np.random.random(size=(1,))[0] * (1000 + max(0, self.cash)) / 300
+        investment: float = (
+            np.random.random(size=(1,))[0] * (1000 + max(0, self.cash)) / 300
+        )
         self.cash -= investment
         self.earning_value_of_assets += (
             np.random.normal(loc=self.quality_of_leadership, scale=1.0, size=(1,))[0]
@@ -110,6 +112,7 @@ class Stock:
             self.report_earnings()
         else:
             self.days_since_earnings += 1
+        self.update_price_history(self.price)
 
     def report_earnings(self) -> None:
         """Reports earnings and updates relevant stock attributes."""
@@ -153,7 +156,7 @@ class Stock:
         )
         return np.append(output, self.get_price_changes_over_time()).astype(float)
 
-    def update_price_history(self, price: float) -> np.ndarray:
+    def update_price_history(self, price: float):
         """Update the price history of the stock.
 
         Args:
@@ -163,7 +166,7 @@ class Stock:
             An array of the updated price history.
 
         """
-        return np.append(self.price_history[1:], price)
+        self.price_history = np.append(self.price_history[1:], price)
 
     def compound_cash(self, interest_rate_apy: float) -> None:
         """Compounds the current cash holding.
