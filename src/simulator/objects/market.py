@@ -34,6 +34,7 @@ class Market:
         """
         self.stocks = stocks
         self.interest_rate_apy = interest_rate_apy
+        self.participants: list[Participant] = []
 
         self.minimum_stock_price = MINIMUM_STOCK_PRICE
 
@@ -46,7 +47,7 @@ class Market:
         Args:
             participants: The participants in the market.
         """
-        self.participants = participants
+        self.participants += participants
         self.participant_id_map = {
             participant.id: participant for participant in self.participants
         }
@@ -55,14 +56,16 @@ class Market:
         """Advances the market's stocks forward one day."""
         stocks_to_delist = []
         for stock in self.stocks:
+            if self.check_stock_for_delisting(stock):
+                stocks_to_delist.append(stock)
+                continue
             stock.price = self.inject_noise_into_stock_price(stock)
             stock.update_price_history(stock.price)
             stock.compound_cash(self.interest_rate_apy)
-            if self.check_stock_for_delisting(stock):
-                stocks_to_delist.append(stock)
             stock.step()
 
         for stock in stocks_to_delist:
+            print(f"delisting stock: {stock}")
             self.delist_stock(stock)
 
     def inject_noise_into_stock_price(self, stock: Stock) -> float:
@@ -76,7 +79,6 @@ class Market:
 
         Returns:
             An updated stock price.
-
         """
         updated_price = stock.price + np.random.normal(
             0, stock.stock_volatility * stock.price
@@ -119,6 +121,7 @@ class Market:
             stock: The stock to delist.
         """
         stock.price = 0.0
+        stock.update_price_history(stock.price)
         self.stocks.remove(stock)
 
     def resolve_market_orders(
@@ -148,8 +151,33 @@ class Market:
                 for _ in range(sell_order[0].quantity)
             ]
 
+        print(f"Number of buy order stocks: {len(buy_order_stocks.keys())}")
+        print(f"Number of sell order stocks: {len(sell_order_stocks.keys())}")
+
+        for sell_order_stock in sell_order_stocks:
+            if sell_order_stock not in buy_order_stocks:
+                # Case that participants want to sell a stock but nobody is buying:
+                # decrease the stock price. Move stock price 10% toward the lowest bid,
+                # or if the bids were above the current price, decrease the stock price
+                # by 5%.
+                sell_order_stock.price = sell_order_stock.price + min(
+                    (sell_order_stocks[sell_order_stock][0][1] - sell_order_stock.price)
+                    * 0.1,
+                    sell_order_stock.price * 0.05,
+                )
+                continue
+
         for buy_order_stock in buy_order_stocks:
             if buy_order_stock not in sell_order_stocks:
+                # Case that participants want to buy a stock but nobody is selling:
+                # increase the stock price. Move stock price 10% toward the highest bid,
+                # or if the bids were below the current price, increase the stock price
+                # by 5%.
+                buy_order_stock.price = buy_order_stock.price + max(
+                    (buy_order_stocks[buy_order_stock][0][1] - buy_order_stock.price)
+                    * 0.1,
+                    buy_order_stock.price * 0.05,
+                )
                 continue
 
             n_shares_to_transfer = min(
@@ -185,6 +213,7 @@ class Market:
                     stock_holding_to_transfer
                 )
                 seller_participant.cash += stock_cost
+                stock_holding_to_transfer.stock.price = stock_cost
 
     def step_market(self) -> None:
         """Steps the market forward one day."""

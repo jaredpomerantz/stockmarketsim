@@ -43,4 +43,6 @@ class MultiLayerPerceptron(BaseNN):
             The model output.
 
         """
-        return self.network(input).squeeze()
+        output = self.network(input).squeeze()
+        exp_output = torch.exp(output / 1000)
+        return exp_output

@@ -45,15 +45,51 @@ class Stock:
         self.stock_volatility = stock_volatility
 
         self.price = self.price_history[-1]
-        self.days_since_earnings = int(np.random.uniform(0, 92, size=(1,)))
+        self.days_since_earnings = np.random.uniform(0, 92, size=(1,))[0]
 
     def __repr__(self) -> str:
         """Defines string representation for the Stock object."""
-        return f"(Stock {self.id}; Price {self.price}; Cash {self.cash})"
+        return f"(Stock {self.id}; Price {self.price}; Cash {self.cash})\n"
 
     def __eq__(self, other) -> bool:
-        """Defines the equality condition for the Stock object."""
+        """Defines equality condition for Stock objects.
+
+        Args:
+            other: The other Stock object to compare.
+        """
         return self.id == other.id
+
+    def __lt__(self, other) -> bool:
+        """Defines less-than condition for Stock objects.
+
+        Args:
+            other: The other Stock object to compare.
+        """
+        return self.id < other.id
+
+    def __le__(self, other) -> bool:
+        """Defines less-than-or-equal condition for Stock objects.
+
+        Args:
+            other: The other Stock object to compare.
+        """
+        return self.id <= other.id
+
+    def __gt__(self, other) -> bool:
+        """Defines greater-than condition for Stock objects.
+
+        Args:
+            other: The other Stock object to compare.
+        """
+        return self.id > other.id
+
+    def __ge__(self, other) -> bool:
+        """Defines greater-than-or-equal condition for Stock objects.
+
+        Args:
+            other: The other Stock object to compare.
+        """
+        return self.id >= other.id
 
     def __hash__(self) -> int:
         return uuid.UUID(self.id).int  # type: ignore
@@ -63,10 +99,12 @@ class Stock:
 
         Includes an update for cash and earning value of assets.
         """
-        investment: float = float(np.random.random(size=(1,))) * (1000 + max(0, self.cash))
+        investment: float = (
+            np.random.random(size=(1,))[0] * (1000 + max(0, self.cash)) / 300
+        )
         self.cash -= investment
         self.earning_value_of_assets += (
-            float(np.random.normal(loc=self.quality_of_leadership, scale=1.0))
+            np.random.normal(loc=self.quality_of_leadership, scale=1.0, size=(1,))[0]
             * investment
         )
         if self.days_since_earnings == 92:
@@ -74,16 +112,17 @@ class Stock:
             self.report_earnings()
         else:
             self.days_since_earnings += 1
+        self.update_price_history(self.price)
 
     def report_earnings(self) -> None:
         """Reports earnings and updates relevant stock attributes."""
         self.latest_quarterly_earnings = float(
-                np.random.normal(
-                    loc=self.earning_value_of_assets,
-                    scale=self.earning_value_of_assets / 5,
-                    size=(1,),
-                )
+            np.random.normal(
+                loc=self.earning_value_of_assets,
+                scale=self.earning_value_of_assets / 5,
+                size=(1,),
             )
+        )
         self.cash += self.latest_quarterly_earnings
 
     def get_price_changes_over_time(self) -> np.ndarray:
@@ -117,7 +156,7 @@ class Stock:
         )
         return np.append(output, self.get_price_changes_over_time()).astype(float)
 
-    def update_price_history(self, price: float) -> np.ndarray:
+    def update_price_history(self, price: float):
         """Update the price history of the stock.
 
         Args:
@@ -127,7 +166,7 @@ class Stock:
             An array of the updated price history.
 
         """
-        return np.append(self.price_history[1:], price)
+        self.price_history = np.append(self.price_history[1:], price)
 
     def compound_cash(self, interest_rate_apy: float) -> None:
         """Compounds the current cash holding.
@@ -148,7 +187,7 @@ class StockHolding:
 
     def __repr__(self) -> str:
         """Defines the string representation of the StockHolding."""
-        return f"Stock: {self.stock}; quantity: {self.stock_quantity}"
+        return f"Stock: {self.stock}; quantity: {self.stock_quantity}\n"
 
     def __eq__(self, other) -> bool:
         """Defines equality condition for StockHolding objects.
@@ -215,7 +254,7 @@ class Portfolio:
         """Define the string representation of the Portfolio."""
         output = ""
         for stock_holding in self.get_stock_holding_list():
-            output += stock_holding.__repr__() + "\n"
+            output += stock_holding.__repr__()
         return output
 
     def __eq__(self, other) -> bool:

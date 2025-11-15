@@ -46,10 +46,19 @@ def test_stock_get_price_changes_over_time_with_valid_price_history_returns_expe
 
 
 def test_stock_update_price_history_with_valid_price_returns_expected_result(
-    basic_stock,
+    basic_stock: Stock,
 ) -> None:
     # Act.
-    result = basic_stock.update_price_history(1825.0)
+    basic_stock.update_price_history(1825.0)
 
     # Assert.
-    assert np.all(np.isclose(result, np.arange(1, 1826)))
+    assert np.all(np.isclose(basic_stock.price_history, np.arange(1, 1826)))
+
+
+def test_stock_step_completes(basic_stock) -> None:
+    # Act.
+    basic_stock.price = 25
+    basic_stock.step()
+
+    # Assert.
+    assert basic_stock.price_history[-1] == 25

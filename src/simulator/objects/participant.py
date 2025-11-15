@@ -28,9 +28,6 @@ class Participant:
         self.id = str(uuid.uuid4())
         self.stock_portfolio = stock_portfolio
         self.policy = policy
-        self.stock_portfolio_value_history = (
-            np.ones(shape=(1825,)) * self.stock_portfolio.get_stock_portfolio_value()
-        )
         self.cash = cash
 
         self.policy.initialize_portfolio(self.stock_portfolio)
