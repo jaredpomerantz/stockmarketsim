@@ -72,7 +72,6 @@ class Participant:
         """
         buy_orders = self.policy.infer_buy_actions()
         sell_orders = self.policy.infer_sell_actions()
-        # print(buy_orders, sell_orders)
         return (buy_orders, sell_orders)
 
     def update_policy(self) -> None:

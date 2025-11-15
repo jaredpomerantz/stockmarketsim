@@ -201,12 +201,11 @@ class NNPolicy(BasePolicy):
             price_to_offer = current_price + (valuation - current_price) * 0.1
             buy_orders.append(
                 BuyOrder(
-                    stock=selected_stocks[i],
+                    stock=selected_stock,
                     quantity=1,
                     price=price_to_offer,
                 )
             )
-        print(buy_orders)
         return buy_orders
 
     def infer_sell_actions(self) -> list[SellOrder]:
@@ -245,7 +244,7 @@ class NNPolicy(BasePolicy):
             price_to_offer = current_price + (valuation - current_price) * 0.1
             sell_orders.append(
                 SellOrder(
-                    stock=selected_stocks[i],
+                    stock=selected_stock,
                     quantity=1,
                     price=price_to_offer,
                 )
