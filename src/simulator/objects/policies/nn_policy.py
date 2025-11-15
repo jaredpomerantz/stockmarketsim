@@ -1,4 +1,4 @@
-"""Definition for the Transformer Policy class."""
+"""Definition for the Neural Network Policy class."""
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -41,10 +41,11 @@ class NNPolicy(BasePolicy):
             valuation_model_path: The path to model responsible for valuing stocks.
             valuation_model_noise_std: The standard deviation of noise for weights.
         """
-        super().__init__(market=market)
-
-        self.n_stocks_to_sample = n_stocks_to_sample
-        self.max_stocks_per_timestep = max_stocks_per_timestep
+        super().__init__(
+            market=market,
+            n_stocks_to_sample=n_stocks_to_sample,
+            max_stocks_per_timestep=max_stocks_per_timestep,
+        )
 
         self.device = (
             torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -56,10 +57,7 @@ class NNPolicy(BasePolicy):
         self.valuation_model_noise_std = valuation_model_noise_std
         self.inject_noise_into_model_weights()
 
-        self.cash_stock = Stock(1.0, 0, 0, np.array([1.0]), 0.5, 0.0)
-
         self.selected_stock_history = []
-        self.buy_valuation_history = []
         self.buy_input_tensor_history = []
         self.loss = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(params=self.valuation_model.parameters())
@@ -74,42 +72,16 @@ class NNPolicy(BasePolicy):
     def generate_buy_input_tensor(self) -> tuple[list[Stock], torch.Tensor]:
         """Generates an input tensor of randomly selected stocks.
 
-        Args:
-            market: The stock market to sample from.
-            portfolio: The stocks in the participant's portfolio.
-            n_stocks: The number of stocks to sample from the stock market.
-
         Returns:
             A tensor of stock parameters to input into the model.
         """
-        cash_holding = StockHolding(self.cash_stock, 0)
-
-        n_stocks_in_market = len(self.market.stocks)
-        selected_stocks = self.market.stocks
-
-        # If the number of available stocks is more than the length of the
-        # input tensor, sample n_stocks stocks.
-        if len(self.market.stocks) > self.n_stocks_to_sample:
-            selected_stock_indices = np.random.choice(
-                range(n_stocks_in_market), size=self.n_stocks_to_sample, replace=False
-            )
-            selected_stocks = [self.market.stocks[i] for i in selected_stock_indices]
-        valid_stocks = torch.Tensor(
-            np.array(
-                [
-                    np.append(
-                        stock.get_stock_features(),
-                        (
-                            self.portfolio.stock_holding_dict.get(stock.id)
-                            or cash_holding
-                        ).stock_quantity,
-                    )
-                    for stock in selected_stocks
-                ]
-            )
+        selected_stocks, valid_stocks_feature_array = (
+            self.generate_generic_buy_input_array()
         )
+
+        valid_stocks_features = torch.Tensor(valid_stocks_feature_array)
         return [self.cash_stock] + selected_stocks, torch.cat(
-            (self.get_cash_features(), valid_stocks), dim=0
+            (self.get_cash_features(), valid_stocks_features), dim=0
         ).to(torch.float32)
 
     def generate_sell_input_tensor(self) -> tuple[list[Stock], torch.Tensor]:
@@ -118,138 +90,44 @@ class NNPolicy(BasePolicy):
         Returns:
             A tensor of stock parameters to input into the model.
         """
-        cash_holding = StockHolding(self.cash_stock, 0)
-
-        portfolio_stocks = [
-            stock_holding.stock
-            for stock_holding in self.portfolio.get_stock_holding_list()
-        ]
-        selected_stocks = portfolio_stocks
-
-        # If the number of available stocks is more than the length of the
-        # input tensor, sample n_stocks stocks.
-        if (
-            len(list(self.portfolio.stock_holding_dict.keys()))
-            > self.n_stocks_to_sample
-        ):
-            n_stocks_in_portfolio = len(portfolio_stocks)
-            selected_stock_indices = np.random.choice(
-                range(n_stocks_in_portfolio),
-                size=self.n_stocks_to_sample,
-                replace=False,
-            )
-            selected_stocks = [portfolio_stocks[i] for i in selected_stock_indices]
-
-        valid_stocks = torch.Tensor(
-            np.array(
-                [
-                    np.append(
-                        stock.get_stock_features(),
-                        (
-                            self.portfolio.stock_holding_dict.get(stock.id)
-                            or cash_holding
-                        ).stock_quantity,
-                    )
-                    for stock in selected_stocks
-                ]
-            )
+        selected_stocks, valid_stock_feature_array = (
+            self.generate_generic_sell_input_array()
         )
+        valid_stocks_features = torch.Tensor(valid_stock_feature_array)
         return [self.cash_stock] + selected_stocks, torch.cat(
-            (self.get_cash_features(), valid_stocks), dim=0
+            (self.get_cash_features(), valid_stocks_features), dim=0
         ).to(torch.float32)
 
     def infer_buy_actions(self) -> list[BuyOrder]:
         """Infer buy actions based on the current market."""
-        buy_orders = []
         selected_stocks, input_tensor = self.generate_buy_input_tensor()
 
         self.update_buy_input_tensor_histories(
             selected_stocks=selected_stocks, input_tensor=input_tensor
         )
-        valuations: torch.Tensor = self.valuation_model.forward(
-            input_tensor.to(self.device)
+        valuations: np.ndarray = (
+            self.valuation_model.forward(input_tensor.to(self.device))
+            .detach()
+            .cpu()
+            .numpy()
         )
 
-        current_prices = torch.tensor([stock.price for stock in selected_stocks]).to(
-            self.device
+        return self.get_buy_actions_from_valuations(
+            valuations=valuations, selected_stocks=selected_stocks
         )
-        projected_percent_change = (valuations - current_prices) / (
-            current_prices + 1e-8
-        )
-        projected_percent_change[0] = torch.clamp(
-            projected_percent_change[0], 0.98, 1.05
-        )
-
-        value_stock_pairs: list[tuple[float, float, float, Stock]] = [
-            (
-                projected_percent_change[i].item(),
-                valuations[i].item(),
-                current_prices[i].item(),
-                selected_stocks[i],
-            )
-            for i in range(len(selected_stocks))
-        ]
-
-        sorted_value_stock_pairs = sorted(value_stock_pairs, reverse=True)
-
-        for i in range(self.max_stocks_per_timestep):
-            _, valuation, current_price, selected_stock = sorted_value_stock_pairs[i]
-
-            if selected_stock is self.cash_stock:
-                return buy_orders
-
-            price_to_offer = current_price + (valuation - current_price) * 0.1
-            buy_orders.append(
-                BuyOrder(
-                    stock=selected_stock,
-                    quantity=1,
-                    price=price_to_offer,
-                )
-            )
-        return buy_orders
 
     def infer_sell_actions(self) -> list[SellOrder]:
         """Infer sell actions based on the current portfolio."""
-        sell_orders = []
         selected_stocks, input_tensor = self.generate_sell_input_tensor()
-        valuations: torch.Tensor = self.valuation_model.forward(
-            input_tensor.to(self.device)
+        valuations: np.ndarray = (
+            self.valuation_model.forward(input_tensor.to(self.device))
+            .detach()
+            .cpu()
+            .numpy()
         )
-        current_prices = torch.tensor([stock.price for stock in selected_stocks]).to(
-            self.device
+        return self.get_sell_actions_from_valuations(
+            valuations=valuations, selected_stocks=selected_stocks
         )
-        projected_percent_change = (valuations - current_prices) / current_prices
-        projected_percent_change[0] = torch.clamp(
-            projected_percent_change[0], 0.98, 1.05
-        )
-
-        value_stock_pairs: list[tuple[float, float, float, Stock]] = [
-            (
-                projected_percent_change[i].item(),
-                valuations[i].item(),
-                current_prices[i].item(),
-                selected_stocks[i],
-            )
-            for i in range(len(selected_stocks))
-        ]
-
-        sorted_value_stock_pairs = sorted(value_stock_pairs)
-
-        for i in range(self.max_stocks_per_timestep):
-            _, valuation, current_price, selected_stock = sorted_value_stock_pairs[i]
-
-            if selected_stock is self.cash_stock:
-                return sell_orders
-
-            price_to_offer = current_price + (valuation - current_price) * 0.1
-            sell_orders.append(
-                SellOrder(
-                    stock=selected_stock,
-                    quantity=1,
-                    price=price_to_offer,
-                )
-            )
-        return sell_orders
 
     def update_policy(self) -> None:
         """Updates the policy based on performance relative to market."""
@@ -283,22 +161,6 @@ class NNPolicy(BasePolicy):
             (torch.tensor([10.0, 10.0, 10.0, 10.0]), compounded_rates, null_cash_array),
             dim=0,
         ).unsqueeze(0)
-
-    def update_valuation_histories(
-        self, selected_stocks: list[Stock], valuations: torch.Tensor
-    ) -> None:
-        """Updates the valuation histories with their respective stocks.
-
-        Args:
-            selected_stocks: A list of stocks that were selected to value.
-            valuations: The valuations of the respective selected_stocks]
-        """
-        if len(self.selected_stock_history) >= 30:
-            self.selected_stock_history = self.selected_stock_history[1:]
-            self.buy_valuation_history = self.buy_valuation_history[1:]
-
-        self.selected_stock_history.append(selected_stocks)
-        self.buy_valuation_history.append(valuations)
 
     def update_buy_input_tensor_histories(
         self, selected_stocks: list[Stock], input_tensor: torch.Tensor
