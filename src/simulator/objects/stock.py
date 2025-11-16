@@ -100,19 +100,26 @@ class Stock:
         Includes an update for cash and earning value of assets.
         """
         investment: float = (
-            np.random.random(size=(1,))[0] * (1000 + max(0, self.cash)) / 300
+            np.random.random(size=(1,))[0] * (1000 + max(0, self.cash)) / 100
         )
         self.cash -= investment
         self.earning_value_of_assets += (
             np.random.normal(loc=self.quality_of_leadership, scale=1.0, size=(1,))[0]
             * investment
         )
+        self.depreciate_assets()
         if self.days_since_earnings == 92:
             self.days_since_earnings = 0
             self.report_earnings()
         else:
             self.days_since_earnings += 1
         self.update_price_history(self.price)
+
+    def depreciate_assets(self) -> None:
+        """Depreciates the earning value of assets."""
+        self.earning_value_of_assets -= np.random.random(size=(1,))[0] * (
+            self.earning_value_of_assets * 0.01 + 30.0
+        )
 
     def report_earnings(self) -> None:
         """Reports earnings and updates relevant stock attributes."""

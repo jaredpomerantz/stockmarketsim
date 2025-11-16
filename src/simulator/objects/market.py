@@ -60,7 +60,6 @@ class Market:
                 stocks_to_delist.append(stock)
                 continue
             stock.price = self.inject_noise_into_stock_price(stock)
-            stock.update_price_history(stock.price)
             stock.compound_cash(self.interest_rate_apy)
             stock.step()
 
