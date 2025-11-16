@@ -32,8 +32,8 @@ class MLPolicy(BasePolicy):
         self.n_stocks_to_sample = n_stocks_to_sample
         self.max_stocks_per_timestep = max_stocks_per_timestep
 
-        with open(valuation_model_path, "rb") as file:
-            self.model: MLRegressor = pickle.load(file)
+        with valuation_model_path.open("rb") as model_file:
+            self.valuation_model: MLRegressor = pickle.load(model_file)
 
         self.selected_stock_history = []
         self.buy_input_history = []
@@ -85,7 +85,16 @@ class MLPolicy(BasePolicy):
 
     def update_policy(self) -> None:
         """Updates the policy based on performance relative to market."""
-        raise NotImplementedError()
+        if len(self.selected_stock_history) < 30:
+            return
+        past_stocks: np.ndarray = self.buy_input_history[0]
+
+        past_stocks_current_prices = (
+            np.array(
+                [stock.price or 0.0 for stock in self.selected_stock_history[0]]
+            )
+        )
+        self.valuation_model.fit(past_stocks, past_stocks_current_prices, warm_start=True)
 
     def get_cash_features(self) -> np.ndarray:
         """Gets the features for the cash asset."""
