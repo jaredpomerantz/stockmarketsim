@@ -106,7 +106,11 @@ class NNPolicy(BasePolicy):
             selected_stocks=selected_stocks, input_tensor=input_tensor
         )
         valuations: np.ndarray = (
-            self.valuation_model.forward(input_tensor.to(self.device))
+            torch.clamp(
+                self.valuation_model.forward(input_tensor.to(self.device)),
+                min=0.0,
+                max=1e8,
+            )
             .detach()
             .cpu()
             .numpy()
@@ -119,8 +123,15 @@ class NNPolicy(BasePolicy):
     def infer_sell_actions(self) -> list[SellOrder]:
         """Infer sell actions based on the current portfolio."""
         selected_stocks, input_tensor = self.generate_sell_input_tensor()
+        if len(list(self.portfolio.get_stock_holding_list())) == 0:
+            return []
+
         valuations: np.ndarray = (
-            self.valuation_model.forward(input_tensor.to(self.device))
+            torch.clamp(
+                self.valuation_model.forward(input_tensor.to(self.device)),
+                min=0.0,
+                max=1e8,
+            )
             .detach()
             .cpu()
             .numpy()

@@ -186,7 +186,9 @@ class BasePolicy:
         """
         sell_orders = []
         current_prices = np.array([stock.price for stock in selected_stocks])
-        projected_percent_change = (valuations - current_prices) / current_prices
+        projected_percent_change = (valuations - current_prices) / (
+            current_prices + 1e-8
+        )
         projected_percent_change[0] = np.clip(projected_percent_change[0], 0.98, 1.05)
 
         value_stock_pairs: list[tuple[float, float, float, Stock]] = [

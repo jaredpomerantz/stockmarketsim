@@ -78,6 +78,8 @@ class MLPolicy(BasePolicy):
     def infer_sell_actions(self) -> list[SellOrder]:
         """Infer sell actions based on the current portfolio."""
         selected_stocks, input_array = self.generate_sell_input_array()
+        if len(list(self.portfolio.get_stock_holding_list())) == 0:
+            return []
 
         valuations: np.ndarray = np.clip(
             self.valuation_model.predict(input_array), a_min=0.05, a_max=1e8

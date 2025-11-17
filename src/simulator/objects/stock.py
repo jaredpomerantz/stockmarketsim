@@ -45,7 +45,7 @@ class Stock:
         self.stock_volatility = stock_volatility
 
         self.price = self.price_history[-1]
-        self.days_since_earnings = np.random.uniform(0, 92, size=(1,))[0]
+        self.days_since_earnings = np.random.randint(0, 91, size=(1,))[0]
 
     def __repr__(self) -> str:
         """Defines string representation for the Stock object."""
@@ -100,11 +100,13 @@ class Stock:
         Includes an update for cash and earning value of assets.
         """
         investment: float = (
-            np.random.random(size=(1,))[0] * (1000 + max(0, self.cash)) / 100
+            np.random.random(size=(1,))[0] * (1000 + max(0, self.cash)) / 500
         )
         self.cash -= investment
         self.earning_value_of_assets += (
-            np.random.normal(loc=self.quality_of_leadership, scale=1.0, size=(1,))[0]
+            np.random.normal(
+                loc=(0.7 * self.quality_of_leadership), scale=0.1, size=(1,)
+            )[0]
             * investment
         )
         self.depreciate_assets()
@@ -118,7 +120,7 @@ class Stock:
     def depreciate_assets(self) -> None:
         """Depreciates the earning value of assets."""
         self.earning_value_of_assets -= np.random.random(size=(1,))[0] * (
-            self.earning_value_of_assets * 0.01 + 30.0
+            self.earning_value_of_assets * 0.02
         )
 
     def report_earnings(self) -> None:
@@ -126,7 +128,7 @@ class Stock:
         self.latest_quarterly_earnings = float(
             np.random.normal(
                 loc=self.earning_value_of_assets,
-                scale=self.earning_value_of_assets / 5,
+                scale=2000.0,
                 size=(1,),
             )
         )
