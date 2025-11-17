@@ -60,7 +60,6 @@ class Market:
                 stocks_to_delist.append(stock)
                 continue
             stock.price = self.inject_noise_into_stock_price(stock)
-            stock.update_price_history(stock.price)
             stock.compound_cash(self.interest_rate_apy)
             stock.step()
 
@@ -153,6 +152,7 @@ class Market:
 
         print(f"Number of buy order stocks: {len(buy_order_stocks.keys())}")
         print(f"Number of sell order stocks: {len(sell_order_stocks.keys())}")
+        print(f"Market total value: {self.get_market_value()}")
 
         for sell_order_stock in sell_order_stocks:
             if sell_order_stock not in buy_order_stocks:
@@ -214,6 +214,10 @@ class Market:
                 )
                 seller_participant.cash += stock_cost
                 stock_holding_to_transfer.stock.price = stock_cost
+
+    def get_market_value(self) -> float:
+        """Gets the total value of all stocks."""
+        return sum([stock.price for stock in self.stocks])
 
     def step_market(self) -> None:
         """Steps the market forward one day."""

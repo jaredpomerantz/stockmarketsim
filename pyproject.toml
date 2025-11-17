@@ -12,8 +12,8 @@ packages = [
 python = ">=3.10,<3.14"
 torch = { version = "2.8.0+cu128", source = "pytorch_cuda"}
 numpy = ">=2.2.0"
-sklearn = "*"
-lightgbm = "*"
+scikit-learn = ">=1.7.0"
+pandas = "*"
 
 [[tool.poetry.source]]
 name = "pytorch_cuda"

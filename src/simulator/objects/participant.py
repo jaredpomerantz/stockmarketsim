@@ -29,6 +29,7 @@ class Participant:
         self.stock_portfolio = stock_portfolio
         self.policy = policy
         self.cash = cash
+        self.total_value: np.ndarray = np.ones(shape=(1825,)) * self.cash
 
         self.policy.initialize_portfolio(self.stock_portfolio)
 
@@ -53,6 +54,7 @@ class Participant:
             A tuple of BuyOrders and SellOrders.
         """
         self.stock_portfolio.update_portfolio_value_history()
+        self.update_total_value()
         self.update_policy()
         buy_orders, sell_orders = self.get_actions()
         buy_orders_with_id = [(buy_order, self.id) for buy_order in buy_orders]
@@ -62,6 +64,12 @@ class Participant:
     def get_stock_portfolio_value(self) -> float:
         """Get the total value of the Participant's stock portfolio."""
         return self.stock_portfolio.get_stock_portfolio_value()
+
+    def update_total_value(self) -> None:
+        """Updates the total value of the Participant's stock portfolio and cash."""
+        self.total_value = np.append(
+            self.total_value[1:], self.cash + self.get_stock_portfolio_value()
+        )
 
     def get_actions(self) -> tuple[list[BuyOrder], list[SellOrder]]:
         """Gets actions from the policy.
