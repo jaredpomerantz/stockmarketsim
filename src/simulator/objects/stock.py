@@ -120,7 +120,7 @@ class Stock:
     def depreciate_assets(self) -> None:
         """Depreciates the earning value of assets."""
         self.earning_value_of_assets -= np.random.random(size=(1,))[0] * (
-            self.earning_value_of_assets * 0.02
+            self.earning_value_of_assets * 0.03 + 1.5
         )
 
     def report_earnings(self) -> None:
