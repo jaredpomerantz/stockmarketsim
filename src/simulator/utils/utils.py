@@ -3,7 +3,6 @@
 import numpy as np
 from numpy.random import default_rng
 
-from simulator.objects.market import Market
 from simulator.objects.participant import Participant
 from simulator.objects.policies.base_policy import BasePolicy
 from simulator.objects.stock import Portfolio, Stock, StockHolding

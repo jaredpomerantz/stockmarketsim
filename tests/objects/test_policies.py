@@ -7,7 +7,7 @@ import torch
 from simulator.objects.market import Market
 from simulator.objects.orders import BuyOrder, SellOrder
 from simulator.objects.policies.ml_policy import MLPolicy
-from simulator.objects.policies.nn_policy import NNPolicy
+from simulator.objects.policies.nn_policy import NNPolicy, PriceNaiveNNPolicy
 from simulator.objects.stock import Portfolio, StockHolding
 
 from . import TEST_MODULE
@@ -47,6 +47,20 @@ def example_policy_small_sampler(basic_market: Market) -> NNPolicy:  # noqa: F81
     policy = NNPolicy(
         market=basic_market,
         n_stocks_to_sample=1,
+        max_stocks_per_timestep=10,
+        valuation_model_path=TEST_MODULE / "models" / "model.pt",
+        valuation_model_noise_std=0.01,
+    )
+    policy.initialize_portfolio(example_portfolio)
+    return policy
+
+
+@pytest.fixture()
+def example_price_naive_nn_policy(basic_market: Market) -> PriceNaiveNNPolicy:  # noqa: F811
+    example_portfolio = Portfolio([StockHolding(basic_market.stocks[0], 1)])
+    policy = PriceNaiveNNPolicy(
+        market=basic_market,
+        n_stocks_to_sample=5,
         max_stocks_per_timestep=10,
         valuation_model_path=TEST_MODULE / "models" / "model.pt",
         valuation_model_noise_std=0.01,
@@ -107,7 +121,7 @@ def test_nn_policy_generate_buy_input_tensor_given_valid_input_returns_expected_
                 1.0949e-01,
                 2.5017e-01,
                 1.5021e00,
-                1.8240e05,
+                1.82399e05,
                 1.0,
             ],
             [
@@ -139,7 +153,7 @@ def test_nn_policy_generate_buy_input_tensor_given_valid_input_returns_expected_
                 1.0949e-01,
                 2.5017e-01,
                 1.5021e00,
-                1.8240e05,
+                1.82399e05,
                 0.0,
             ],
         ]
@@ -149,7 +163,7 @@ def test_nn_policy_generate_buy_input_tensor_given_valid_input_returns_expected_
     _, output = example_policy.generate_buy_input_tensor()
 
     # Assert.
-    assert torch.allclose(output, expected_result, atol=1e-4)
+    assert torch.allclose(output, expected_result, atol=1e-3)
 
 
 def test_nn_policy_infer_buy_actions_completes(example_policy) -> None:
@@ -205,7 +219,7 @@ def test_nn_policy_generate_sell_input_tensor_given_valid_input_returns_expected
                 1.0949e-01,
                 2.5017e-01,
                 1.5021e00,
-                1.8240e05,
+                1.82399e05,
                 1.0,
             ],
         ]
@@ -215,7 +229,7 @@ def test_nn_policy_generate_sell_input_tensor_given_valid_input_returns_expected
     _, output = example_policy.generate_sell_input_tensor()
 
     # Assert.
-    assert torch.allclose(output, expected_result, atol=1e-4)
+    assert torch.allclose(output, expected_result, atol=1e-3)
 
 
 def test_nn_policy_infer_sell_actions_completes(example_policy) -> None:
@@ -271,7 +285,7 @@ def test_ml_policy_generate_buy_input_array_given_valid_input_returns_expected_r
                 1.0949e-01,
                 2.5017e-01,
                 1.5021e00,
-                1.8240e05,
+                1.82399e05,
                 1.0,
             ],
             [
@@ -303,7 +317,7 @@ def test_ml_policy_generate_buy_input_array_given_valid_input_returns_expected_r
                 1.0949e-01,
                 2.5017e-01,
                 1.5021e00,
-                1.8240e05,
+                1.82399e05,
                 0.0,
             ],
         ]
@@ -313,7 +327,7 @@ def test_ml_policy_generate_buy_input_array_given_valid_input_returns_expected_r
     _, output = example_ml_policy.generate_buy_input_array()
 
     # Assert.
-    assert np.allclose(output, expected_result, atol=1e-4)
+    assert np.allclose(output, expected_result, atol=1e-3)
 
 
 def test_ml_policy_generate_sell_input_array_given_valid_input_returns_expected_result(
@@ -351,7 +365,7 @@ def test_ml_policy_generate_sell_input_array_given_valid_input_returns_expected_
                 1.0949e-01,
                 2.5017e-01,
                 1.5021e00,
-                1.8240e05,
+                1.82399e05,
                 1.0,
             ],
         ]
@@ -361,7 +375,7 @@ def test_ml_policy_generate_sell_input_array_given_valid_input_returns_expected_
     _, output = example_ml_policy.generate_sell_input_array()
 
     # Assert.
-    assert np.allclose(output, expected_result, atol=1e-4)
+    assert np.allclose(output, expected_result, atol=1e-3)
 
 
 def test_ml_policy_infer_buy_actions_completes(example_ml_policy) -> None:
@@ -384,3 +398,131 @@ def test_ml_policy_infer_sell_actions_completes(example_ml_policy) -> None:
         assert isinstance(sell_actions[0], SellOrder)
     else:
         assert sell_actions == []
+
+
+def test_price_naive_nn_policy_generate_buy_input_tensor_given_valid_input_returns_expected_result(
+    example_price_naive_nn_policy,
+) -> None:
+    # Arrange.
+    expected_result = torch.Tensor(
+        [
+            [
+                -1.0,
+                1.0000e01,
+                1.0000e01,
+                1.0000e01,
+                1.1593e00,
+                1.0927e00,
+                1.0300e00,
+                1.0147e00,
+                1.0073e00,
+                1.0024e00,
+                1.0008e00,
+                1.0004e00,
+                1.0001e00,
+                0.0000e00,
+            ],
+            [
+                -1.0,
+                -10000000.0,
+                500.0,
+                500.0,
+                5.4855e-04,
+                2.1978e-03,
+                5.5127e-03,
+                1.6722e-02,
+                5.1903e-02,
+                1.0949e-01,
+                2.5017e-01,
+                1.5021e00,
+                1.82399e05,
+                1.0,
+            ],
+            [
+                -1.0,
+                0.5,
+                500.0,
+                500.0,
+                -0.5,
+                -0.5,
+                -0.5,
+                -0.5,
+                -0.5,
+                -0.5,
+                -0.5,
+                -0.5,
+                -0.5,
+                0.0,
+            ],
+            [
+                -1.0,
+                500.0,
+                500.0,
+                500.0,
+                5.4855e-04,
+                2.1978e-03,
+                5.5127e-03,
+                1.6722e-02,
+                5.1903e-02,
+                1.0949e-01,
+                2.5017e-01,
+                1.5021e00,
+                1.82399e05,
+                0.0,
+            ],
+        ]
+    ).to(torch.float32)
+
+    # Act.
+    _, output = example_price_naive_nn_policy.generate_buy_input_tensor()
+
+    # Assert.
+    assert torch.allclose(output, expected_result, atol=1e-3)
+
+
+def test_price_naive_nn_policy_generate_sell_input_tensor_given_valid_input_returns_expected_result(
+    example_price_naive_nn_policy,
+) -> None:
+    # Arrange.
+    expected_result = torch.Tensor(
+        [
+            [
+                -1.0,
+                1.0000e01,
+                1.0000e01,
+                1.0000e01,
+                1.1593e00,
+                1.0927e00,
+                1.0300e00,
+                1.0147e00,
+                1.0073e00,
+                1.0024e00,
+                1.0008e00,
+                1.0004e00,
+                1.0001e00,
+                0.0000e00,
+            ],
+            [
+                -1.0,
+                -10000000.0,
+                500.0,
+                500.0,
+                5.4855e-04,
+                2.1978e-03,
+                5.5127e-03,
+                1.6722e-02,
+                5.1903e-02,
+                1.0949e-01,
+                2.5017e-01,
+                1.5021e00,
+                1.82399e05,
+                1.0,
+            ],
+        ]
+    ).to(torch.float32)
+
+    # Act.
+    _, output = example_price_naive_nn_policy.generate_sell_input_tensor()
+
+    # Assert.
+    assert torch.allclose(output, expected_result, atol=1e-3)

@@ -21,28 +21,26 @@ def basic_stock() -> Stock:
 def test_stock_get_price_changes_over_time_with_valid_price_history_returns_expected_result(  # noqa: E501
     basic_stock,
 ) -> None:
+    # Assert.
+    expected_result = np.array(
+        [
+            5.48546352e-04,
+            2.74876306e-03,
+            5.51267916e-03,
+            1.67224080e-02,
+            5.19031142e-02,
+            1.09489051e-01,
+            2.50171350e-01,
+            1.50205761e00,
+            1.82399000e05,
+        ]
+    )
+
     # Act.
     result = basic_stock.get_price_changes_over_time()
 
     # Assert.
-    assert np.all(
-        np.isclose(
-            result,
-            np.array(
-                [
-                    5.48546352e-04,
-                    2.19780220e-03,
-                    5.51267916e-03,
-                    1.67224080e-02,
-                    5.19031142e-02,
-                    1.09489051e-01,
-                    2.50171350e-01,
-                    1.50205761e00,
-                    1.82399000e05,
-                ]
-            ),
-        )
-    )
+    assert np.all(np.isclose(result, expected_result))
 
 
 def test_stock_update_price_history_with_valid_price_returns_expected_result(

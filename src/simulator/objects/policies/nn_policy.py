@@ -9,7 +9,7 @@ import torch
 from simulator.objects.market import Market
 from simulator.objects.orders import BuyOrder, SellOrder
 from simulator.objects.policies.base_policy import BasePolicy
-from simulator.objects.stock import Stock, StockHolding
+from simulator.objects.stock import Stock
 
 if TYPE_CHECKING:
     from simulator.objects.market import Market
@@ -188,3 +188,80 @@ class NNPolicy(BasePolicy):
 
         self.selected_stock_history.append(selected_stocks)
         self.buy_input_tensor_history.append(input_tensor)
+
+
+class PriceNaiveNNPolicy(NNPolicy):
+    """Class definition for a Price-Naive NNPolicy.
+
+    All input tensors for this policy will have their prices masked, allowing for
+    the model to value stocks without input from the market.
+    """
+
+    def __init__(
+        self,
+        market: Market,
+        n_stocks_to_sample: int,
+        max_stocks_per_timestep: int,
+        valuation_model_path: Path,
+        valuation_model_noise_std: float = 0.0,
+    ) -> None:
+        """Initializes the NNPolicy.
+
+        Args:
+            market: The stock market object to sample from.
+            n_stocks_to_sample: The number of stocks made visible to the model.
+                This is the length of the input tensor that will be given to
+                the model to select. For consistency, each input tensor will
+                be the same size regardless of the number of stocks in the market.
+            max_stocks_per_timestep: The maximum number of buy/sell actions per step.
+            valuation_model_path: The path to model responsible for valuing stocks.
+            valuation_model_noise_std: The standard deviation of noise for weights.
+        """
+        super().__init__(
+            market=market,
+            n_stocks_to_sample=n_stocks_to_sample,
+            max_stocks_per_timestep=max_stocks_per_timestep,
+            valuation_model_path=valuation_model_path,
+            valuation_model_noise_std=valuation_model_noise_std,
+        )
+
+    def generate_buy_input_tensor(self) -> tuple[list[Stock], torch.Tensor]:
+        """Generates an input tensor of randomly selected stocks.
+
+        Returns:
+            A tensor of stock parameters to input into the model.
+                Current prices of stocks are masked.
+        """
+        selected_stocks, valid_stocks_feature_array = (
+            self.generate_generic_buy_input_array()
+        )
+
+        valid_stocks_features = torch.Tensor(valid_stocks_feature_array)
+        valid_stocks_features[:, 0] = -1.0
+
+        cash_features = self.get_cash_features()
+        cash_features[:, 0] = -1.0
+
+        return [self.cash_stock] + selected_stocks, torch.cat(
+            (cash_features, valid_stocks_features), dim=0
+        ).to(torch.float32)
+
+    def generate_sell_input_tensor(self) -> tuple[list[Stock], torch.Tensor]:
+        """Generates an input tensor of randomly selected stocks.
+
+        Returns:
+            A tensor of stock parameters to input into the model.
+                Current prices of stocks are masked.
+        """
+        selected_stocks, valid_stock_feature_array = (
+            self.generate_generic_sell_input_array()
+        )
+        valid_stocks_features = torch.Tensor(valid_stock_feature_array)
+        valid_stocks_features[:, 0] = -1.0
+
+        cash_features = self.get_cash_features()
+        cash_features[:, 0] = -1.0
+
+        return [self.cash_stock] + selected_stocks, torch.cat(
+            (cash_features, valid_stocks_features), dim=0
+        ).to(torch.float32)
