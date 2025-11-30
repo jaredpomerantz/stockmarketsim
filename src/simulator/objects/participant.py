@@ -30,6 +30,7 @@ class Participant:
         self.policy = policy
         self.cash = cash
         self.total_value: np.ndarray = np.ones(shape=(1825,)) * self.cash
+        self.interest_rate_apy = self.policy.market.interest_rate_apy
 
         self.policy.initialize_portfolio(self.stock_portfolio)
 
@@ -56,6 +57,7 @@ class Participant:
         self.stock_portfolio.update_portfolio_value_history()
         self.update_total_value()
         self.update_policy()
+        self.compound_cash()
         buy_orders, sell_orders = self.get_actions()
         buy_orders_with_id = [(buy_order, self.id) for buy_order in buy_orders]
         sell_orders_with_id = [(sell_order, self.id) for sell_order in sell_orders]
@@ -90,3 +92,11 @@ class Participant:
 
         """
         self.policy.update_policy()
+
+    def compound_cash(self) -> None:
+        """Compounds the current cash holding.
+
+        This initial implementation assumes that the stock can go into debt freely.
+        Cash is compounded the same whether it's negative or positive.
+        """
+        self.cash *= (self.interest_rate_apy + 1) ** (1 / 365)

@@ -35,6 +35,7 @@ class Market:
         self.stocks = stocks
         self.interest_rate_apy = interest_rate_apy
         self.participants: list[Participant] = []
+        self.market_value_history = np.ones(shape=(1825,)) * self.get_market_value()
 
         self.minimum_stock_price = MINIMUM_STOCK_PRICE
 
@@ -104,7 +105,7 @@ class Market:
         if stock.price < self.minimum_stock_price:
             return True
         if stock.cash < 0 and stock.latest_quarterly_earnings < -(
-            stock.cash * (self.interest_rate_apy + 1) ** (DAYS_IN_A_QUARTER / 365)
+            stock.cash * (self.interest_rate_apy / 4)
         ):
             return True
         return False
@@ -219,6 +220,13 @@ class Market:
         """Gets the total value of all stocks."""
         return sum([stock.price for stock in self.stocks])
 
+    def update_market_value_history(self) -> None:
+        """Updates the market value history with the current value."""
+        self.market_value_history = np.append(
+            self.market_value_history[1:],
+            [self.get_market_value()],
+        )
+
     def step_market(self) -> None:
         """Steps the market forward one day."""
         buy_orders: list[tuple[BuyOrder, str]] = []
@@ -235,5 +243,6 @@ class Market:
         buy_orders = sorted(buy_orders, reverse=True)
         sell_orders = sorted(sell_orders, reverse=True)
         self.resolve_market_orders(buy_orders, sell_orders)
+        self.update_market_value_history()
 
         self.advance_stocks()
