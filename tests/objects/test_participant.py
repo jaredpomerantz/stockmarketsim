@@ -47,3 +47,8 @@ def test_participant_update_policy_completes(example_participant) -> None:
 
     # Assert.
     assert len(example_participant.policy.selected_stock_history) == 30
+
+
+def test_participant_step_completes(example_participant) -> None:
+    # Act.
+    example_participant.step_participant()
